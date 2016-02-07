@@ -87,7 +87,7 @@ if __name__ == '__main__':
     # Number that expresses the entropy in bits lost due to generating
     # multiple solutions and picking the "best" one, assuming your preference is
     # known to the attacker.
-    correction = (1.0 / args.count + (math.log(args.count) - 1)) / math.log(2)
+    correction = (1.0 / args.count + math.log(args.count) - 1.0) / math.log(2.0)
   while sum(combinations[-args.costrange:]) < 2.0 ** (args.bits + correction):
     totalcost = totalcost + 1
     comb = 0
