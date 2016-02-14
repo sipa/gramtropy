@@ -630,7 +630,6 @@ void RandomInteger(const mpz_class& range, mpz_class& out) {
         mpz_class max = mpz_class(1) << (8 * bytes);
         mpz_class trange = (max / range) * range;
         double avgread = bytes * (max.get_d() / trange.get_d());
-        std::cerr << "Reading blocks of " << bytes << " would cause " << avgread << " total\n";
         if (avgread < best_avgread) {
             best_bytes = bytes;
             best_avgread = avgread;
@@ -639,7 +638,6 @@ void RandomInteger(const mpz_class& range, mpz_class& out) {
     }
     std::ifstream rng("/dev/urandom", std::ios::binary);
     do {
-        std::cerr << "Reading " << best_bytes << " from PRNG\n";
         out = 0;
         for (int byte = 0; byte < best_bytes; byte++) {
             char c[1];
@@ -653,27 +651,25 @@ void RandomInteger(const mpz_class& range, mpz_class& out) {
     } while(true);
 }
 
-std::string GenerateRandom(const NodeBase* terminal, int bits) {
+std::string GenerateRandom(const NodeBase* terminal, double bits) {
     ExpansionState state;
     std::vector<mpz_class> cumulative;
     cumulative.push_back(mpz_class());
+    double minrange = pow(2.0, bits);
     for (int cost = 1; cost < 1000; cost++) {
         const mpz_class* comb = terminal->Combinations(state, cost);
         if (comb == NULL) {
             throw std::runtime_error("Recursion detected");
         }
         cumulative.push_back(*comb + cumulative.back());
-        std::cerr << "Combinations up to cost " << cost << ": " << cumulative[cost].get_str() << "\n";
-        if (cumulative[cost] >= (mpz_class(1) << bits)) {
+        if (cumulative[cost].get_d() * 0.75 >= minrange) {
             for (int count = 1; count <= cost; count++) {
                 mpz_class range = cumulative[cost] - cumulative[cost - count];
-                std::cerr << "Combinations in range [" << (cost - count + 1) << ".." << cost << "]: " << range.get_str() << "\n";
-                if (range >= (mpz_class(1) << bits) && range * 4 >= cumulative[cost] * 3) {
+                if (range >= minrange && range * 4 >= cumulative[cost] * 3) {
+//                    std::cerr << "Using cost range [" << (cost - count + 1) << ".." << cost << "]: " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
                     mpz_class rand;
                     RandomInteger(range, rand);
-                    std::cerr << "Number in combination range: " << rand.get_str() << "\n";
                     rand += cumulative[cost - count];
-                    std::cerr << "Number in total range: " << rand.get_str() << "\n";
                     for (int realcost = cost - count + 1; realcost <= cost; realcost++) {
                         if (rand < cumulative[realcost]) {
                             std::vector<char> ret;
@@ -698,6 +694,16 @@ int main(int argc, char** argv) {
         throw std::runtime_error("No terminal symbol selected");
     }
 
-    std::cout << GenerateRandom(terminal, argc > 1 ? strtol(argv[1], NULL, 10) : 64) << "\n";
+    unsigned long num = argc > 2 ? strtoul(argv[2], NULL, 10) : 1;
+    double bits = argc > 1 ? strtod(argv[1], NULL) : 64;
+
+    if (num > 1) {
+        bits += (1.0 / num + log(num) - 1.0) / log(2.0);
+    }
+
+    while (num > 0) {
+        std::cout << GenerateRandom(terminal, bits) << "\n";
+        num--;
+    }
     return 0;
 }
