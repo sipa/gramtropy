@@ -651,7 +651,7 @@ void RandomInteger(const mpz_class& range, mpz_class& out) {
     } while(true);
 }
 
-std::string GenerateRandom(const NodeBase* terminal, double bits) {
+std::vector<std::string> GenerateRandom(const NodeBase* terminal, double bits, int solutions) {
     ExpansionState state;
     std::vector<mpz_class> cumulative;
     cumulative.push_back(mpz_class());
@@ -662,22 +662,27 @@ std::string GenerateRandom(const NodeBase* terminal, double bits) {
             throw std::runtime_error("Recursion detected");
         }
         cumulative.push_back(*comb + cumulative.back());
+        std::cerr << "Length " << cost << ": " << comb->get_str() << " [" << log(comb->get_d())/log(2) << "] (cumulative " << cumulative.back().get_str() << " [" << log(cumulative.back().get_d())/log(2.0) << ", " << log(cumulative.back().get_d())/log(2.0)/cost << "])" << std::endl;
         if (cumulative[cost].get_d() * 0.75 >= minrange) {
             for (int count = 1; count <= cost; count++) {
                 mpz_class range = cumulative[cost] - cumulative[cost - count];
                 if (range >= minrange && range * 4 >= cumulative[cost] * 3) {
-//                    std::cerr << "Using cost range [" << (cost - count + 1) << ".." << cost << "]: " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
-                    mpz_class rand;
-                    RandomInteger(range, rand);
-                    rand += cumulative[cost - count];
-                    for (int realcost = cost - count + 1; realcost <= cost; realcost++) {
-                        if (rand < cumulative[realcost]) {
-                            std::vector<char> ret;
-                            terminal->Expand(-1, state, realcost, rand - cumulative[realcost - 1], ret);
-                            return std::string(ret.begin(), ret.end());
+                    std::cerr << "Using length range [" << (cost - count + 1) << ".." << cost << "]: " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
+                    std::vector<std::string> vret;
+                    for (int n = 0; n < solutions; n++) {
+                        mpz_class rand;
+                        RandomInteger(range, rand);
+                        rand += cumulative[cost - count];
+                        for (int realcost = cost - count + 1; realcost <= cost; realcost++) {
+                            if (rand < cumulative[realcost]) {
+                                std::vector<char> ret;
+                                terminal->Expand(-1, state, realcost, rand - cumulative[realcost - 1], ret);
+                                vret.push_back(std::string(ret.begin(), ret.end()));
+                                break;
+                            }
                         }
                     }
-                    assert(0);
+                    return vret;
                 }
             }
         }
@@ -701,9 +706,8 @@ int main(int argc, char** argv) {
         bits += (1.0 / num + log(num) - 1.0) / log(2.0);
     }
 
-    while (num > 0) {
-        std::cout << GenerateRandom(terminal, bits) << "\n";
-        num--;
+    for (const auto& str : GenerateRandom(terminal, bits, num)) {
+        std::cout << str << "\n";
     }
     return 0;
 }

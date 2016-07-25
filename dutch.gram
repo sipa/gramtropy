@@ -11,6 +11,7 @@ deduplicate codaonset
 
 expand inner nucleus codaonset inner
 expand inner nucleus
+#print inner
 
 expand word inner
 expand word onset inner

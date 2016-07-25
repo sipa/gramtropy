@@ -1,0 +1,48 @@
+symbol s and adj qualify adjective singlecount multicount singleactor multiactor singleverb multiverb when where singlething multithing connect singlesubject multisubject object sentencepart sentence
+
+dict s " "
+dict qualify "slightly" "somewhat" "very" "excessively" "massively" "hardly"
+dict adjective "big" "small" "angry" "sleepy" "tall" "hungry" "funny" "great" "puny" "ill" "good" "bad" "evil" "tiny" "huge" "fearsome" "crazy" "boring" "insane" "green" "red" "blue" "yellow" "nasty" "ugly" "pretty" "hot" "cold" "thin" "empty" "full" "odd" "apt" "fun" "weird" "young" "hip" "icy" "lax" "mad" "raw" "sad" "shy" "sly" "tin"
+dict and "and"
+dict singlecount "the" "one" "a"
+dict multicount "two" "three" "some" "many" "all" "no" "zero"
+dict singleactor "dog" "man" "woman" "cat" "engineer" "coder" "wizard" "witch" "director" "president" "driver" "lord" "child" "baby" "nurse" "judge" "mathematician" "lawyer" "fly" "lizard" "ghost" "bear" "fish"
+dict multiactor "dogs" "men" "women" "cats" "engineers" "coders" "wizards" "witches" "directors" "presidents" "drivers" "children" "babies" "nurses" "judges" "mathematicians" "lawyers" "flies" "lizards" "ghosts" "bears" "fish"
+dict singleverb "kicks" "casts" "imagines" "designs" "programs" "enchants" "establishes" "proves" "delivers" "hunts" "holds" "hurts" "has" "goes to" "dreams about" "walks to" "is" "writes" "hears" "leaves" "vets"
+dict multiverb "kick" "cast" "imagine" "design" "program" "enchant" "establish" "prove" "deliver" "hunt" "hold" "hurt" "have" "go to" "dream about" "walk to" "write" "hear" "leave" "vet"
+dict when "tomorrow" "soon" "currently" "perhaps" "on weekdays" "at night" "at noon" "maybe" "often" "perhaps" "occasionally" "early on"
+dict where "in Switzerland" "in Belgium" "in the pool" "outside" "inside" "on the ground" "here" "there" "under the bridge" "on Mars"
+dict singlething "house" "car" "robot" "dishwasher" "bike" "road" "tree" "street" "beast" "wall" "rail" "hut" "grass" "horse" "bone" "leg" "sun" "soil" "wolf" "hound" "abyss" "adult" "agent" "album" "angel" "ankle" "anvil" "apple" "arena" "armor" "atlas" "bacon" "baron" "basil" "beach" "bench" "bigot" "bison" "block" "blood" "booth" "brain"
+dict multithing "houses" "cars" "robots" "dishwashers" "bikes" "roads" "trees" "streets" "beasts" "walls" "rails" "huts" "horses" "bones" "legs" "wolves" "hounds" "baths" "beans" "bells" "boats" 
+dict connect "and" "but" "thus" "hence" "yet" "considering" "while" "so"
+
+expand adj adjective
+expand adj qualify s adjective
+expand adj adjective s and s adjective
+expand adj adjective s and s qualify s adjective
+
+expand singlesubject singlecount s singleactor
+expand singlesubject singlecount s adj s singleactor
+expand multisubject multicount s multiactor
+expand multisubject multicount s adj s multiactor
+
+expand object singlesubject
+expand object singlecount s singlething
+expand object singlecount s adj s singlething
+expand object multisubject
+expand object multicount s multithing
+expand object multicount s adj s multithing
+
+expand sentencepart when s singlesubject s singleverb s object s where
+expand sentencepart when s singlesubject s singleverb s object
+expand sentencepart singlesubject s singleverb s object s where
+expand sentencepart singlesubject s singleverb s object
+expand sentencepart when s multisubject s multiverb s object s where
+expand sentencepart when s multisubject s multiverb s object
+expand sentencepart multisubject s multiverb s object s where
+expand sentencepart multisubject s multiverb s object
+
+expand sentence sentencepart
+expand sentence sentencepart s connect s sentence
+
+terminal sentence
