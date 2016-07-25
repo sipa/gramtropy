@@ -1,34 +1,55 @@
-symbol s and adj qualify adjective singlecount multicount singleactor multiactor singleverb multiverb when where singlething multithing connect singlesubject multisubject object sentencepart sentence
+symbol s and vadj cadj adj cqualify qualify vadjective cadjective adjective vsinglecount csinglecount multicount vsingleactor csingleactor singleactor multiactor singleverb multiverb when where vsinglething csinglething singlething multithing connect singlesubject multisubject object sentencepart sentence
 
 dict s " "
-dict qualify "slightly" "somewhat" "very" "excessively" "massively" "hardly"
-dict adjective "big" "small" "angry" "sleepy" "tall" "hungry" "funny" "great" "puny" "ill" "good" "bad" "evil" "tiny" "huge" "fearsome" "crazy" "boring" "insane" "green" "red" "blue" "yellow" "nasty" "ugly" "pretty" "hot" "cold" "thin" "empty" "full" "odd" "apt" "fun" "weird" "young" "hip" "icy" "lax" "mad" "raw" "sad" "shy" "sly" "tin"
+dict cqualify "slightly" "somewhat" "very" "excessively" "massively" "hardly"
+dict vadjective "angry" "ill" "evil" "insane" "ugly" "empty" "odd" "apt" "icy"
+dict cadjective "big" "small" "sleepy" "tall" "hungry" "funny" "great" "puny" "good" "bad" "tiny" "huge" "fearsome" "crazy" "boring" "green" "red" "blue" "yellow" "nasty" "pretty" "hot" "cold" "thin" "full" "fun" "weird" "young" "hip" "lax" "mad" "raw" "sad" "shy" "sly" "tin"
 dict and "and"
-dict singlecount "the" "one" "a"
-dict multicount "two" "three" "some" "many" "all" "no" "zero"
-dict singleactor "dog" "man" "woman" "cat" "engineer" "coder" "wizard" "witch" "director" "president" "driver" "lord" "child" "baby" "nurse" "judge" "mathematician" "lawyer" "fly" "lizard" "ghost" "bear" "fish"
-dict multiactor "dogs" "men" "women" "cats" "engineers" "coders" "wizards" "witches" "directors" "presidents" "drivers" "children" "babies" "nurses" "judges" "mathematicians" "lawyers" "flies" "lizards" "ghosts" "bears" "fish"
+dict vsinglecount "the" "one" "no" "a"
+dict csinglecount "the" "one" "no" "an"
+dict multicount "two" "three" "four" "five" "some" "many" "all" "zero" "a great many" "most" "a group of" "a collection of" "a delegation of"
+dict vsingleactor "engineer" "intern" "admirer" "animal" "expert" "orphan" "user"
+dict csingleactor "racer" "rover" "patron" "outlaw" "nomad" "nanny" "joker" "jockey" "dog" "man" "woman" "cat" "coder" "bishop" "wizard" "witch" "maid" "tzar" "tyrant" "saint" "phantom" "director" "demon" "president" "driver" "lord" "mute" "child" "baby" "nurse" "judge" "mathematician" "lawyer" "fly" "lizard" "ghost" "bear" "fish"
+dict multiactor "users" "orphans" "racers" "rovers" "patrons" "outlaws" "nomads" "nannies" "jokers" "jockeys" "dogs" "men" "women" "cats" "engineers" "bishops" "interns" "admirers" "experts" "animals" "coders" "wizards" "maids" "tzars" "tyrants" "saints" "phantoms" "witches" "directors" "demons" "presidents" "drivers" "children" "mutes" "babies" "nurses" "judges" "mathematicians" "lawyers" "flies" "lizards" "ghosts" "bears" "fish"
 dict singleverb "kicks" "casts" "imagines" "designs" "programs" "enchants" "establishes" "proves" "delivers" "hunts" "holds" "hurts" "has" "goes to" "dreams about" "walks to" "is" "writes" "hears" "leaves" "vets"
 dict multiverb "kick" "cast" "imagine" "design" "program" "enchant" "establish" "prove" "deliver" "hunt" "hold" "hurt" "have" "go to" "dream about" "walk to" "write" "hear" "leave" "vet"
 dict when "tomorrow" "soon" "currently" "perhaps" "on weekdays" "at night" "at noon" "maybe" "often" "perhaps" "occasionally" "early on"
 dict where "in Switzerland" "in Belgium" "in the pool" "outside" "inside" "on the ground" "here" "there" "under the bridge" "on Mars"
-dict singlething "house" "car" "robot" "dishwasher" "bike" "road" "tree" "street" "beast" "wall" "rail" "hut" "grass" "horse" "bone" "leg" "sun" "soil" "wolf" "hound" "abyss" "adult" "agent" "album" "angel" "ankle" "anvil" "apple" "arena" "armor" "atlas" "bacon" "baron" "basil" "beach" "bench" "bigot" "bison" "block" "blood" "booth" "brain"
-dict multithing "houses" "cars" "robots" "dishwashers" "bikes" "roads" "trees" "streets" "beasts" "walls" "rails" "huts" "horses" "bones" "legs" "wolves" "hounds" "baths" "beans" "bells" "boats" 
+dict vsinglething "abyss" "adult" "agent" "album" "angel" "ankle" "anvil" "apple" "arena" "armor" "atlas" "insect" "issuer" "itch"
+dict csinglething "house" "car" "shoe" "tank" "robot" "dishwasher" "bike" "road" "pearl" "paw" "swine" "tool" "computer" "tree" "street" "fuse" "beast" "wall" "rail" "hut" "grass" "horse" "bone" "leg" "sun" "soil" "wolf" "hound" "bacon" "baron" "basil" "beach" "bench" "bigot" "bison" "block" "blood" "booth" "brain"
+dict multithing "insects" "issuers" "houses" "cars" "shoes" "tanks" "robots" "dishwashers" "bikes" "roads" "pearls" "paws" "swines" "tools" "computers" "trees" "streets" "fuses" "beasts" "walls" "rails" "huts" "horses" "bones" "legs" "wolves" "hounds" "baths" "beans" "bells" "boats" 
 dict connect "and" "but" "thus" "hence" "yet" "considering" "while" "so"
 
-expand adj adjective
-expand adj qualify s adjective
-expand adj adjective s and s adjective
-expand adj adjective s and s qualify s adjective
+expand adjective vadjective
+expand adjective cadjective
+expand qualify cqualify
+expand singlething vsinglething
+expand singlething csinglething
+expand singleactor vsingleactor
+expand singleactor csingleactor
 
-expand singlesubject singlecount s singleactor
-expand singlesubject singlecount s adj s singleactor
+expand vadj vadjective
+expand vadj vadjective s and s adjective
+expand vadj vadjective s and s qualify s adjective
+expand cadj cadjective
+expand cadj cqualify s adjective
+expand cadj cadjective s and s adjective
+expand cadj cadjective s and s qualify s adjective
+expand adj vadj
+expand adj cadj
+
+expand singlesubject vsinglecount s csingleactor
+expand singlesubject csinglecount s vsingleactor
+expand singlesubject vsinglecount s cadj s singleactor
+expand singlesubject csinglecount s vadj s singleactor
 expand multisubject multicount s multiactor
 expand multisubject multicount s adj s multiactor
 
 expand object singlesubject
-expand object singlecount s singlething
-expand object singlecount s adj s singlething
+expand object vsinglecount s csinglething
+expand object csinglecount s vsinglething
+expand object vsinglecount s cadj s singlething
+expand object csinglecount s vadj s singlething
 expand object multisubject
 expand object multicount s multithing
 expand object multicount s adj s multithing
