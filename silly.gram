@@ -1,34 +1,127 @@
-symbol s and vadj cadj adj cqualify qualify vadjective cadjective adjective vsinglecount csinglecount multicount vsingleactor csingleactor singleactor multiactor singleverb multiverb when where vsinglething csinglething singlething multithing connect singlesubject multisubject object sentencepart sentence
+symbol s and p_ver s_ver s_averb p_averb vadj cadj adj cqualify qualify
+symbol vadjective cadjective adjective vs_count cs_count p_count vs_actor
+symbol cs_actor s_actor p_actor s_verb p_verb when where vs_thing cs_thing
+symbol s_thing p_thing connect s_subject p_subject object sentencepart sentence
+symbol where_prefix where_c_art where_v_art wherephrase vqualify
 
 dict s " "
-dict cqualify "slightly" "somewhat" "very" "excessively" "massively" "hardly"
-dict vadjective "angry" "ill" "evil" "insane" "ugly" "empty" "odd" "apt" "icy"
-dict cadjective "big" "small" "sleepy" "tall" "hungry" "funny" "great" "puny" "good" "bad" "tiny" "huge" "fearsome" "crazy" "boring" "green" "red" "blue" "yellow" "nasty" "pretty" "hot" "cold" "thin" "full" "fun" "weird" "young" "hip" "lax" "mad" "raw" "sad" "shy" "sly" "tin"
+
+dict cqualify "slightly" "somewhat" "very" "excessively" "massively" "hardly" "rather"
+dict vqualify "almost"
+
+dict vadjective "angry" "ill" "evil" "insane" "ugly" "empty" "odd" "apt" "icy" "abstract" "absurd"
+dict vadjective "accoustic" "actual" "aerobic" "afraid" "amazing" "amused" "ancient" "annual"
+dict vadjective "another" "antique" "arctic" "armed" "awake" "aware" "awesome" "awful" "awkward"
+
+dict cadjective "big" "small" "sleepy" "tall" "hungry" "funny" "great" "puny"
+dict cadjective "good" "bad" "tiny" "huge" "fearsome" "crazy" "boring" "green"
+dict cadjective "red" "blue" "yellow" "nasty" "pretty" "hot" "cold" "thin" "sly"
+dict cadjective "full" "fun" "weird" "young" "hip" "lax" "mad" "raw" "sad" "shy" 
+dict cadjective "tin" "lonely"
+
 dict and "and"
-dict vsinglecount "the" "one" "no" "a"
-dict csinglecount "the" "one" "no" "an"
-dict multicount "two" "three" "four" "five" "some" "many" "all" "zero" "a great many" "most" "a group of" "a collection of" "a delegation of"
-dict vsingleactor "engineer" "intern" "admirer" "animal" "expert" "orphan" "user"
-dict csingleactor "racer" "rover" "patron" "outlaw" "nomad" "nanny" "joker" "jockey" "dog" "man" "woman" "cat" "coder" "bishop" "wizard" "witch" "maid" "tzar" "tyrant" "saint" "phantom" "director" "demon" "president" "driver" "lord" "mute" "child" "baby" "nurse" "judge" "mathematician" "lawyer" "fly" "lizard" "ghost" "bear" "fish"
-dict multiactor "users" "orphans" "racers" "rovers" "patrons" "outlaws" "nomads" "nannies" "jokers" "jockeys" "dogs" "men" "women" "cats" "engineers" "bishops" "interns" "admirers" "experts" "animals" "coders" "wizards" "maids" "tzars" "tyrants" "saints" "phantoms" "witches" "directors" "demons" "presidents" "drivers" "children" "mutes" "babies" "nurses" "judges" "mathematicians" "lawyers" "flies" "lizards" "ghosts" "bears" "fish"
-dict singleverb "kicks" "casts" "imagines" "designs" "programs" "enchants" "establishes" "proves" "delivers" "hunts" "holds" "hurts" "has" "goes to" "dreams about" "walks to" "is" "writes" "hears" "leaves" "vets"
-dict multiverb "kick" "cast" "imagine" "design" "program" "enchant" "establish" "prove" "deliver" "hunt" "hold" "hurt" "have" "go to" "dream about" "walk to" "write" "hear" "leave" "vet"
-dict when "tomorrow" "soon" "currently" "perhaps" "on weekdays" "at night" "at noon" "maybe" "often" "perhaps" "occasionally" "early on"
-dict where "in Switzerland" "in Belgium" "in the pool" "outside" "inside" "on the ground" "here" "there" "under the bridge" "on Mars"
-dict vsinglething "abyss" "adult" "agent" "album" "angel" "ankle" "anvil" "apple" "arena" "armor" "atlas" "insect" "issuer" "itch"
-dict csinglething "house" "car" "shoe" "tank" "robot" "dishwasher" "bike" "road" "pearl" "paw" "swine" "tool" "computer" "tree" "street" "fuse" "beast" "wall" "rail" "hut" "grass" "horse" "bone" "leg" "sun" "soil" "wolf" "hound" "bacon" "baron" "basil" "beach" "bench" "bigot" "bison" "block" "blood" "booth" "brain"
-dict multithing "insects" "issuers" "houses" "cars" "shoes" "tanks" "robots" "dishwashers" "bikes" "roads" "pearls" "paws" "swines" "tools" "computers" "trees" "streets" "fuses" "beasts" "walls" "rails" "huts" "horses" "bones" "legs" "wolves" "hounds" "baths" "beans" "bells" "boats" 
-dict connect "and" "but" "thus" "hence" "yet" "considering" "while" "so"
+
+dict vs_count "the" "one" "no" "a"
+
+dict cs_count "the" "one" "no" "an"
+
+dict p_count "two" "three" "four" "five" "some" "many" "all" "zero"
+dict p_count "a great many" "most" "a group of" "a collection of"
+dict p_count "a delegation of" "any"
+
+dict vs_actor "engineer" "intern" "admirer" "animal" "expert" "orphan" "actor"
+dict vs_actor "actress" "addict" "adult" "agent" "alien" "amateur" "analyst"
+dict vs_actor "army" "artist" "athlete" "aunt" "author"
+
+dict cs_actor "racer" "rover" "patron" "outlaw" "nomad" "nanny" "joker" "user"
+dict cs_actor "jockey" "dog" "man" "woman" "cat" "coder" "bishop" "wizard"
+dict cs_actor "witch" "maid" "czar" "tyrant" "saint" "phantom" "director"
+dict cs_actor "demon" "president" "driver" "lord" "mute" "child" "baby" "nurse"
+dict cs_actor "judge" "mathematician" "lawyer" "fly" "lizard" "ghost" "bear"
+dict cs_actor "fish"
+
+dict p_actor "users" "orphans" "racers" "rovers" "patrons" "outlaws" "nomads"
+dict p_actor "nannies" "jokers" "jockeys" "dogs" "men" "women" "cats"
+dict p_actor "engineers" "bishops" "interns" "admirers" "experts" "animals"
+dict p_actor "coders" "wizards" "maids" "czars" "tyrants" "saints" "phantoms"
+dict p_actor "witches" "directors" "demons" "presidents" "drivers" "children"
+dict p_actor "mutes" "babies" "nurses" "judges" "mathematicians" "lawyers"
+dict p_actor "flies" "lizards" "ghosts" "bears" "fish" "actors" "actresses"
+dict p_actor "addicts" "adults" "agents" "aliens" "amateurs" "analysts"
+dict p_actor "artists" "athletes" "aunts"
+
+dict s_verb "kicks" "casts" "imagines" "designs" "programs" "enchants"
+dict s_verb "establishes" "proves" "delivers" "hunts" "holds" "hurts" "has"
+dict s_verb "goes to" "dreams about" "walks to" "is" "writes" "hears" "leaves"
+dict s_verb "wants" "abandons" "absorbs" "abuses" "accesses" "accuses" "acquires"
+dict s_verb "adapts" "adds" "addresses" "adjusts" "advances" "agrees with"
+dict s_verb "alerts" "allows" "alters" "approves" "argues about" "arranges"
+dict s_verb "arrests" "asks about" "assaults" "attacks" "attends" "attracts"
+dict s_verb "audits" "avoids"
+
+dict p_verb "kick" "cast" "imagine" "design" "program" "enchant" "establish"
+dict p_verb "prove" "deliver" "hunt" "hold" "hurt" "have" "go to" "dream about"
+dict p_verb "walk to" "write" "hear" "leave" "want" "abandon" "absorb" "abuse"
+dict p_verb "access" "accuse" "acquire" "adapt" "add" "adress" "adjust" "advance"
+dict p_verb "agree with" "alert" "allow" "alter" "approve" "argue about" "arrange"
+dict p_verb "arrest" "ask about" "assault" "attack" "attend" "attract" "audits"
+dict p_verb "avoid"
+
+dict s_averb "will" "should" "will not" "should not" "has to" "could"
+dict s_averb "could not" "shall" "shall not"
+
+dict p_averb "will" "should" "will not" "should not" "have to" "could"
+dict p_averb "could not" "shall" "shall not"
+
+dict when "tomorrow" "soon" "currently" "perhaps" "on weekdays" "at night"
+dict when "at noon" "maybe" "often" "perhaps" "occasionally" "early on" "again"
+dict when "always" "in january" "in february" "in march" "in april" "in may"
+dict when "in june" "in july" "in august" "in september" "in october" "in november"
+dict when "in december"
+
+dict where "in Switzerland" "in Belgium" "in the pool" "outside" "inside"
+dict where "on the ground" "here" "there" "under the bridge" "on Mars"
+
+dict where_prefix "in" "across" "near" "beyond" "close to" "over" "above" "above" "ahead of" "around"
+dict where_v_art "a" "the"
+dict where_c_art "an" "the"
+
+dict vs_thing "abyss" "adult" "agent" "album" "angel" "ankle" "anvil" "apple" "accident"
+dict vs_thing "arena" "armor" "atlas" "insect" "issuer" "itch" "ability" "acid" "action"
+dict vs_thing "advice" "affair" "age" "air" "airport" "aisle" "alarm" "album" "alcohol"
+dict vs_thing "alley" "amount" "anchor" "anger" "angle" "answer" "antenna" "anxiety"
+dict vs_thing "apology" "apple" "arch" "arena" "arm" "armor" "arrow" "art" "artefact"
+dict vs_thing "artwork" "asset" "asthma" "atom" "auction" "avocado" "axis"
+
+dict cs_thing "house" "car" "shoe" "tank" "robot" "dishwasher" "bike" "road"
+dict cs_thing "pearl" "paw" "swine" "tool" "computer" "tree" "street" "fuse"
+dict cs_thing "beast" "wall" "rail" "hut" "grass" "horse" "bone" "leg" "sun"
+dict cs_thing "soil" "wolf" "hound" "bacon" "baron" "basil" "beach" "bench"
+dict cs_thing "bigot" "bison" "block" "blood" "booth" "brain"
+
+dict p_thing "insects" "issuers" "houses" "cars" "shoes" "tanks" "robots"
+dict p_thing "dishwashers" "bikes" "roads" "pearls" "paws" "swines" "tools"
+dict p_thing "computers" "trees" "streets" "fuses" "beasts" "walls" "rails"
+dict p_thing "huts" "horses" "bones" "legs" "wolves" "hounds" "baths" "beans"
+dict p_thing "bells" "boats" "abilities" "accidents" "actions" "affairs" "ages"
+dict p_thing "airports" "aisles" "alarms" "albums" "alleys" "amounts" "anchors"
+dict p_thing "angles" "antennas" "apologies" "apples" "arches" "arenas" "arms"
+dict p_thing "armors" "arrows" "artefacts" "artworks" "assets" "atoms" "auctions"
+dict p_thing "axes"
+
+dict connect "and" "but" "thus" "hence" "yet" "considering" "while" "so" "and also"
 
 expand adjective vadjective
 expand adjective cadjective
 expand qualify cqualify
-expand singlething vsinglething
-expand singlething csinglething
-expand singleactor vsingleactor
-expand singleactor csingleactor
+expand qualify vqualify
+expand s_thing vs_thing
+expand s_thing cs_thing
+expand s_actor vs_actor
+expand s_actor cs_actor
 
 expand vadj vadjective
+expand vadj vqualify s adjective
 expand vadj vadjective s and s adjective
 expand vadj vadjective s and s qualify s adjective
 expand cadj cadjective
@@ -38,30 +131,45 @@ expand cadj cadjective s and s qualify s adjective
 expand adj vadj
 expand adj cadj
 
-expand singlesubject vsinglecount s csingleactor
-expand singlesubject csinglecount s vsingleactor
-expand singlesubject vsinglecount s cadj s singleactor
-expand singlesubject csinglecount s vadj s singleactor
-expand multisubject multicount s multiactor
-expand multisubject multicount s adj s multiactor
+expand p_ver p_verb
+expand p_ver p_averb s p_verb
+expand s_ver s_verb
+expand s_ver s_averb s p_verb
 
-expand object singlesubject
-expand object vsinglecount s csinglething
-expand object csinglecount s vsinglething
-expand object vsinglecount s cadj s singlething
-expand object csinglecount s vadj s singlething
-expand object multisubject
-expand object multicount s multithing
-expand object multicount s adj s multithing
+expand s_subject vs_count s cs_actor
+expand s_subject cs_count s vs_actor
+expand s_subject vs_count s cadj s s_actor
+expand s_subject cs_count s vadj s s_actor
+expand p_subject p_actor
+expand p_subject p_count s p_actor
+expand p_subject p_count s adj s p_actor
+expand p_subject adj s p_actor
 
-expand sentencepart when s singlesubject s singleverb s object s where
-expand sentencepart when s singlesubject s singleverb s object
-expand sentencepart singlesubject s singleverb s object s where
-expand sentencepart singlesubject s singleverb s object
-expand sentencepart when s multisubject s multiverb s object s where
-expand sentencepart when s multisubject s multiverb s object
-expand sentencepart multisubject s multiverb s object s where
-expand sentencepart multisubject s multiverb s object
+expand object s_subject
+expand object vs_count s cs_thing
+expand object cs_count s vs_thing
+expand object vs_count s cadj s s_thing
+expand object cs_count s vadj s s_thing
+expand object p_subject
+expand object p_thing
+expand object p_count s p_thing
+expand object p_count s adj s p_thing
+expand object adj s p_thing
+
+expand wherephrase where
+expand wherephrase where_prefix s where_c_art s vs_thing
+expand wherephrase where_prefix s where_c_art s vadj s s_thing
+expand wherephrase where_prefix s where_v_art s cs_thing
+expand wherephrase where_prefix s where_v_art s cadj s s_thing
+
+expand sentencepart when s s_subject s s_ver s object s where
+expand sentencepart when s s_subject s s_ver s object
+expand sentencepart s_subject s s_ver s object s wherephrase
+expand sentencepart s_subject s s_ver s object
+expand sentencepart when s p_subject s p_ver s object s wherephrase
+expand sentencepart when s p_subject s p_ver s object
+expand sentencepart p_subject s p_ver s object s wherephrase
+expand sentencepart p_subject s p_ver s object
 
 expand sentence sentencepart
 expand sentence sentencepart s connect s sentence
