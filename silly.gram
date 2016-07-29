@@ -19,7 +19,7 @@ dict cadjective "red" "blue" "yellow" "nasty" "pretty" "hot" "cold" "thin" "sly"
 dict cadjective "full" "fun" "weird" "young" "hip" "lax" "mad" "raw" "sad" "shy"
 dict cadjective "tin" "lonely" "basic" "beautiful" "best" "better" "bitter" "black"
 dict cadjective "bleak" "blind" "blurry" "boring" "brass" "brave" "brief" "bright"
-dict cadjective "broken" "bronze" "brown" "busy"
+dict cadjective "broken" "bronze" "brown" "busy" "calm"
 
 dict and "and"
 
@@ -62,7 +62,7 @@ dict s_verb "alerts" "allows" "alters" "approves" "argues about" "arranges"
 dict s_verb "arrests" "asks about" "assaults" "attacks" "attends" "attracts"
 dict s_verb "audits" "avoids" "balances" "battles" "begins" "believes that"
 dict s_verb "benefits from" "blames" "blesses" "boils" "boosts" "borrows"
-dict s_verb "brings" "builds" "burdens"
+dict s_verb "brings" "builds" "burdens" "calls"
 
 dict p_verb "kick" "cast" "imagine" "design" "program" "enchant" "establish"
 dict p_verb "prove" "deliver" "hunt" "hold" "hurt" "have" "go to" "dream about"
@@ -72,12 +72,13 @@ dict p_verb "agree with" "alert" "allow" "alter" "approve" "argue about" "arrang
 dict p_verb "arrest" "ask about" "assault" "attack" "attend" "attract" "audits"
 dict p_verb "avoid" "balance" "battle" "begin" "believe that" "benefit from"
 dict p_verb "blame" "bless" "boil" "boost" "borrow" "bring" "build" "burden"
+dict p_verb "call"
 
-dict s_averb "will" "should" "will not" "should not" "has to" "could"
-dict s_averb "could not" "shall" "shall not"
+dict s_averb "will" "should" "will not" "should not" "has to" "could" "can"
+dict s_averb "could not" "shall" "shall not" "cannot"
 
-dict p_averb "will" "should" "will not" "should not" "have to" "could"
-dict p_averb "could not" "shall" "shall not"
+dict p_averb "will" "should" "will not" "should not" "have to" "could" "can"
+dict p_averb "could not" "shall" "shall not" "cannot"
 
 dict when "tomorrow" "soon" "currently" "perhaps" "on weekdays" "at night"
 dict when "at noon" "maybe" "often" "perhaps" "occasionally" "early on" "again"
@@ -109,7 +110,8 @@ dict cs_thing "basket" "bean" "belt" "bench" "bicycle" "blade" "blanket"
 dict cs_thing "blouse" "boat" "body" "bomb" "bonus" "book" "border" "box"
 dict cs_thing "bracket" "brain" "brand" "bread" "breeze" "brick" "bridge" "broccoli"
 dict cs_thing "broom" "brush" "bubble" "budget" "buffalo" "bulb" "bullet"
-dict cs_thing "bundle" "bunker" "burger" "bus" "business" "bone"
+dict cs_thing "bundle" "bunker" "burger" "bus" "business" "bone" "cabbage"
+dict cs_thing "cabin" "cable" "cactus" "cage" "cake" "camera" "camps"
 
 dict p_thing "insects" "issuers" "houses" "cars" "shoes" "tanks" "robots"
 dict p_thing "dishwashers" "bikes" "roads" "pearls" "paws" "swines" "tools"
@@ -124,8 +126,8 @@ dict p_thing "barrels" "baskets" "belts" "benches" "bicycles" "blades"
 dict p_thing "blankets" "blouses" "bodies" "bombs" "books" "borders"
 dict p_thing "boxes" "brackets" "brains" "brands" "breads" "breezes" "bricks" "bridges"
 dict p_thing "broccolis" "brooms" "brushes" "bubbles" "budgets" "buffalo" "bulbs"
-dict p_thing "bullets" "bundles" "bunkers" "burgers" "busses" "businesses"
-
+dict p_thing "bullets" "bundles" "bunkers" "burgers" "busses" "businesses" "cabins"
+dict p_thing "cables" "cactusses" "cages" "cakes" "cameras" "camp"
 
 dict connect "and" "but" "thus" "hence" "yet" "considering" "while" "so" "and also" "because" "before"
 
