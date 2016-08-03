@@ -11,6 +11,7 @@
 #include <gmpxx.h>
 #include <stdlib.h>
 #include <memory>
+#include <math.h>
 
 class StringVector {
     std::vector<char> buf;
