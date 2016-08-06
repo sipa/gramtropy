@@ -4,48 +4,18 @@
 #include <string>
 #include <set>
 #include <map>
-#include <ctype.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <gmpxx.h>
 #include <stdlib.h>
 #include <memory>
 #include <math.h>
 
-class StringVector {
-    std::vector<char> buf;
-    std::vector<uint32_t> index;
-
-public:
-    void Append(const std::string& str) {
-        index.push_back(buf.size());
-        buf.insert(buf.end(), str.begin(), str.end());
-    }
-
-    void Append(const std::vector<char>& vec) {
-        index.push_back(buf.size());
-        buf.insert(buf.end(), vec.begin(), vec.end());
-    }
-
-    size_t size() const {
-        return index.size();
-    }
-
-    std::vector<char>::const_iterator StringBegin(size_t num) const {
-        return buf.begin() + index[num];
-    }
-
-    std::vector<char>::const_iterator StringEnd(size_t num) const {
-        if (num + 1 == index.size()) {
-            return buf.end();
-        }
-        return buf.begin() + index[num + 1];
-    }
-};
+#include "gramtropy/bignum.h"
+#include "gramtropy/stringvector.h"
 
 struct ExpansionInfo {
-    mpz_class combinations;
+    BigNum combinations;
 };
 
 struct FlattenedExpansionInfo : public ExpansionInfo {
@@ -76,17 +46,17 @@ struct ExpansionState {
     std::set<ExpansionRef> in_flight;
 };
 
-bool Deduplicate(ExpansionState& state, const NodeBase* node, uint32_t cost, const mpz_class* combinations, std::set<std::vector<char> >& s, std::vector<char>* duplicate);
+bool Deduplicate(ExpansionState& state, const NodeBase* node, uint32_t cost, const BigNum* combinations, std::set<std::vector<char> >& s, std::vector<char>* duplicate);
 
-static const mpz_class mpz_zero(0);
+static const BigNum zero;
 
 class NodeBase {
 private:
     const std::string description;
 
 protected:
-    virtual const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const =0;
-    virtual void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const =0;
+    virtual const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const =0;
+    virtual void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const =0;
 
 public:
     std::string Describe(const ExpansionRef& ref) const {
@@ -99,20 +69,20 @@ public:
         return description;
     }
 
-    const mpz_class* Combinations(ExpansionState& state, uint32_t cost) const {
+    const BigNum* Combinations(ExpansionState& state, uint32_t cost) const {
         ExpansionRef ref(this, cost);
         if (state.in_flight.count(ref)) {
             return NULL;
         }
         state.in_flight.insert(ref);
-        const mpz_class* ret = ComputeCombinations(state, ref);
+        const BigNum* ret = ComputeCombinations(state, ref);
         state.in_flight.erase(ref);
         return ret;
     }
 
-    void Expand(int level, ExpansionState& state, uint32_t cost, const mpz_class& num, std::vector<char>& ret) const {
+    void Expand(int level, ExpansionState& state, uint32_t cost, const BigNum& num, std::vector<char>& ret) const {
         ExpansionRef ref(this, cost);
-        const mpz_class* comb = ComputeCombinations(state, ref);
+        const BigNum* comb = ComputeCombinations(state, ref);
         if (comb == NULL || num >= *comb) {
             throw std::runtime_error("Impossible combination requested for " + Describe(ref));
         }
@@ -120,7 +90,7 @@ public:
             for (int i = 0; i < level; i++) {
                 std::cerr << "  ";
             };
-            std::cerr << "* " << Describe(ref) << "[" << num.get_str() << "]\n";
+            std::cerr << "* " << Describe(ref) << "[" << num.hex() << "]\n";
         }
         ComputeExpansion(level >= 0 ? level + 1 : level, state, ref, num, ret);
     }
@@ -129,12 +99,12 @@ public:
     virtual ~NodeBase() {}
 };
 
-bool Deduplicate(int level, ExpansionState& state, const NodeBase* node, uint32_t cost, const mpz_class& combinations, std::set<std::vector<char> >& s, std::vector<char>* duplicate) {
-    mpz_class num;
+bool Deduplicate(int level, ExpansionState& state, const NodeBase* node, uint32_t cost, const BigNum& combinations, std::set<std::vector<char> >& s, std::vector<char>* duplicate) {
+    BigNum num;
     bool ret = false;
     while (num < combinations) {
         std::vector<char> accum;
-        mpz_class num_mutable = num;
+        BigNum num_mutable = num;
         node->Expand(level, state, cost, num_mutable, accum);
         if (s.count(accum)) {
             if (duplicate) {
@@ -152,18 +122,18 @@ bool Deduplicate(int level, ExpansionState& state, const NodeBase* node, uint32_
 class NodeDictionary : public NodeBase {
 private:
     std::map<uint32_t, StringVector> dicts;
-    std::map<uint32_t, mpz_class> counts;
+    std::map<uint32_t, BigNum> counts;
 
 protected:
-    const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
+    const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
         if (counts.count(ref.cost)) {
             return &counts.at(ref.cost);
         } else {
-            return &mpz_zero;
+            return &zero;
         }
     }
 
-    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const override {
+    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const override {
         ret.insert(ret.end(), dicts.at(ref.cost).StringBegin(num.get_ui()), dicts.at(ref.cost).StringEnd(num.get_ui()));
     }
 
@@ -182,28 +152,31 @@ private:
     const NodeBase* b;
 
 protected:
-    const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
+    const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
         if (state.disjunctions.count(ref)) {
             return &state.disjunctions[ref].combinations;
         }
 
-        const mpz_class* combinations_a = a->Combinations(state, ref.cost);
-        const mpz_class* combinations_b = b->Combinations(state, ref.cost);
+        const BigNum* combinations_a = a->Combinations(state, ref.cost);
+        const BigNum* combinations_b = b->Combinations(state, ref.cost);
         if (combinations_a == NULL || combinations_b == NULL) {
             return NULL;
         }
-        mpz_class& combinations = state.disjunctions[ref].combinations;
-        combinations = (*combinations_a) + (*combinations_b);
+        BigNum& combinations = state.disjunctions[ref].combinations;
+        combinations = *combinations_a;
+        combinations += *combinations_b;
         return &combinations;
     }
 
-    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const override {
-        const mpz_class* combinations_a = a->Combinations(state, ref.cost);
+    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const override {
+        const BigNum* combinations_a = a->Combinations(state, ref.cost);
         if (num < *combinations_a) {
             a->Expand(level, state, ref.cost, num, ret);
             return;
         }
-        b->Expand(level, state, ref.cost, num - *combinations_a, ret);
+        BigNum n = num;
+        n -= *combinations_a;
+        b->Expand(level, state, ref.cost, n, ret);
     }
 
 public:
@@ -216,21 +189,21 @@ private:
     const NodeBase* right;
 
 protected:
-    const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
+    const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
         if (state.concatenations.count(ref)) {
             return &state.concatenations[ref].combinations;
         }
 
-        mpz_class combinations;
+        BigNum combinations;
 
         for (uint32_t left_cost = 0; left_cost <= ref.cost; left_cost++) {
             uint32_t right_cost = ref.cost - left_cost;
-            const mpz_class* left_combinations = left->Combinations(state, left_cost);
-            const mpz_class* right_combinations = right->Combinations(state, right_cost);
-            if (left_combinations != NULL && *left_combinations == 0) {
+            const BigNum* left_combinations = left->Combinations(state, left_cost);
+            const BigNum* right_combinations = right->Combinations(state, right_cost);
+            if (left_combinations != NULL && left_combinations->is_zero()) {
                 continue;
             }
-            if (right_combinations != NULL && *right_combinations == 0) {
+            if (right_combinations != NULL && right_combinations->is_zero()) {
                 continue;
             }
             if (left_combinations == NULL || right_combinations == NULL) {
@@ -242,25 +215,24 @@ protected:
         return &(state.concatenations[ref].combinations = combinations);
     }
 
-    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const override {
-        mpz_class num_copy = num;
-        mpz_class mult_combinations;
+    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const override {
+        BigNum num_copy = num;
+        BigNum mult_combinations;
         for (uint32_t left_cost = 0; left_cost <= ref.cost; left_cost++) {
             uint32_t right_cost = ref.cost - left_cost;
-            const mpz_class* left_combinations = left->Combinations(state, left_cost);
-            const mpz_class* right_combinations = right->Combinations(state, right_cost);
-            if (left_combinations != NULL && *left_combinations == 0) {
+            const BigNum* left_combinations = left->Combinations(state, left_cost);
+            const BigNum* right_combinations = right->Combinations(state, right_cost);
+            if (left_combinations != NULL && left_combinations->is_zero()) {
                 continue;
             }
-            if (right_combinations != NULL && *right_combinations == 0) {
+            if (right_combinations != NULL && right_combinations->is_zero()) {
                 continue;
             }
             mult_combinations = (*left_combinations) * (*right_combinations);
             if (num_copy < mult_combinations) {
-                mpz_class left_num, right_num;
-                mpz_tdiv_qr(right_num.get_mpz_t(), left_num.get_mpz_t(), num_copy.get_mpz_t(), left_combinations->get_mpz_t());
-                left->Expand(level, state, left_cost, left_num, ret);
-                right->Expand(level, state, right_cost, right_num, ret);
+                BigNum other = num_copy.divmod(*left_combinations);
+                left->Expand(level, state, left_cost, num_copy, ret);
+                right->Expand(level, state, right_cost, other, ret);
                 return;
             } else {
                 num_copy -= mult_combinations;
@@ -279,14 +251,14 @@ private:
     const NodeBase* reference;
 
 protected:
-    const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
+    const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
         if (reference == NULL) {
             throw std::runtime_error("Evaluating undefined reference for" + Describe(ref));
         }
         return reference->Combinations(state, ref.cost);
     }
 
-    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const override {
+    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const override {
         reference->Expand(level, state, ref.cost, num, ret);
     }
 
@@ -306,18 +278,18 @@ private:
     const NodeBase* reference;
 
 protected:
-    const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
+    const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
         if (state.deduplications.count(ref)) {
             return &state.deduplications[ref].combinations;
         }
 
         std::set<std::vector<char > > s;
-        const mpz_class* comb = reference->Combinations(state, ref.cost);
+        const BigNum* comb = reference->Combinations(state, ref.cost);
         if (comb == NULL) {
             return NULL;
         }
         if (*comb > 1000000) {
-            throw std::runtime_error("Deduplication of " + comb->get_str() + " combinations requested for " + Describe(ref));
+            throw std::runtime_error("Deduplication of " + comb->hex() + " combinations requested for " + Describe(ref));
         }
         Deduplicate(-1, state, reference, ref.cost, *comb, s, NULL);
         StringVector& strv = state.deduplications[ref].dict;
@@ -328,7 +300,7 @@ protected:
         return &(state.deduplications[ref].combinations = strv.size());
     }
 
-    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const override {
+    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const override {
         const StringVector& strv = state.deduplications[ref].dict;
         ret.insert(ret.end(), strv.StringBegin(num.get_ui()), strv.StringEnd(num.get_ui()));
     }
@@ -342,8 +314,8 @@ private:
     const NodeBase* reference;
 
 protected:
-    const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
-        const mpz_class* comb = reference->Combinations(state, ref.cost);
+    const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
+        const BigNum* comb = reference->Combinations(state, ref.cost);
         if (comb == NULL) {
             return NULL;
         }
@@ -358,7 +330,7 @@ protected:
         return comb;
     }
 
-    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const override {
+    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const override {
         reference->Expand(level, state, ref.cost, num, ret);
     }
 
@@ -371,8 +343,8 @@ private:
     const NodeBase* reference;
 
 protected:
-    const mpz_class* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
-        const mpz_class* comb = reference->Combinations(state, ref.cost);
+    const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
+        const BigNum* comb = reference->Combinations(state, ref.cost);
         if (comb == NULL) {
             return NULL;
         }
@@ -391,7 +363,7 @@ protected:
         return comb;
     }
 
-    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const mpz_class& num, std::vector<char>& ret) const override {
+    void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const override {
         reference->Expand(level, state, ref.cost, num, ret);
     }
 
@@ -621,63 +593,50 @@ bool Parse(std::istream& in, Grammar* outset) {
     return true;
 }
 
-void RandomInteger(const mpz_class& range, mpz_class& out) {
-    mpz_class max = range - 1;
-    int min_bytes = (mpz_sizeinbase(max.get_mpz_t(), 2) + 7) / 8;
-    int best_bytes = 0;
-    double best_avgread = 1000000;
-    mpz_class best_trange;
-    for (int bytes = min_bytes; bytes < min_bytes + 5; bytes++) {
-        mpz_class max = mpz_class(1) << (8 * bytes);
-        mpz_class trange = (max / range) * range;
-        double avgread = bytes * (max.get_d() / trange.get_d());
-        if (avgread < best_avgread) {
-            best_bytes = bytes;
-            best_avgread = avgread;
-            std::swap(best_trange, trange);
-        }
-    }
+void RandomInteger(const BigNum& range, BigNum& out) {
+    int bits = range.bits();
+    std::vector<uint8_t> data;
+    data.resize((bits + 7)/8);
     std::ifstream rng("/dev/urandom", std::ios::binary);
     do {
-        out = 0;
-        for (int byte = 0; byte < best_bytes; byte++) {
-            char c[1];
-            rng.read(c, 1);
-            out = (out * 256) + (unsigned char)(c[0]);
+        rng.read((char*)&data[0], data.size());
+        if (bits % 8) {
+            data[0] >>= (8 - (bits % 8));
         }
-        if (out < best_trange) {
-            out %= range;
-            return;
-        }
-    } while(true);
+        out = BigNum(&data[0], data.size());
+    } while (out >= range);
 }
 
 std::vector<std::string> GenerateRandom(const NodeBase* terminal, double bits, int solutions) {
     ExpansionState state;
-    std::vector<mpz_class> cumulative;
-    cumulative.push_back(mpz_class());
+    std::vector<BigNum> cumulative;
+    cumulative.push_back(BigNum());
     double minrange = pow(2.0, bits);
     for (int cost = 1; cost < 1000; cost++) {
-        const mpz_class* comb = terminal->Combinations(state, cost);
+        const BigNum* comb = terminal->Combinations(state, cost);
         if (comb == NULL) {
             throw std::runtime_error("Recursion detected");
         }
-        cumulative.push_back(*comb + cumulative.back());
-        std::cerr << "Length " << cost << ": " << comb->get_str() << " [" << log(comb->get_d())/log(2) << "] (cumulative " << cumulative.back().get_str() << " [" << log(cumulative.back().get_d())/log(2.0) << ", " << log(cumulative.back().get_d())/log(2.0)/cost << "])" << std::endl;
+        BigNum ccomb = *comb;
+        ccomb += cumulative.back();
+        cumulative.push_back(std::move(ccomb));
+        std::cerr << "Length " << cost << ": " << comb->hex() << " [" << log(comb->get_d())/log(2) << "] (cumulative " << cumulative.back().hex() << " [" << log(cumulative.back().get_d())/log(2.0) << ", " << log(cumulative.back().get_d())/log(2.0)/cost << "])" << std::endl;
         if (cumulative[cost].get_d() * 0.75 >= minrange) {
             for (int count = 1; count <= cost; count++) {
-                mpz_class range = cumulative[cost] - cumulative[cost - count];
+                BigNum range = cumulative[cost];
+                range -= cumulative[cost - count];
                 if (range >= minrange && range * 4 >= cumulative[cost] * 3) {
                     std::cerr << "Using length range [" << (cost - count + 1) << ".." << cost << "]: " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
                     std::vector<std::string> vret;
                     for (int n = 0; n < solutions; n++) {
-                        mpz_class rand;
+                        BigNum rand;
                         RandomInteger(range, rand);
                         rand += cumulative[cost - count];
                         for (int realcost = cost - count + 1; realcost <= cost; realcost++) {
                             if (rand < cumulative[realcost]) {
                                 std::vector<char> ret;
-                                terminal->Expand(-1, state, realcost, rand - cumulative[realcost - 1], ret);
+                                rand -= cumulative[realcost - 1];
+                                terminal->Expand(-1, state, realcost, rand, ret);
                                 vret.push_back(std::string(ret.begin(), ret.end()));
                                 break;
                             }

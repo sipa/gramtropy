@@ -1,5 +1,6 @@
-symbol onset nucleus coda codaonset inner word
+symbol onset nucleus coda codaonset inner word s words
 
+dict s " "
 dict onset "b" "bl" "br" "ch" "chr" "chl" "d" "dj" "dr" "dw" "f" "fl" "fn" "fr" "g" "gl" "gn" "gr" "h" "j" "k" "kl" "kn" "kr" "kw" "l" "m" "n" "p" "pl" "pr" "ps" "r" "s" "sch" "schl" "schm" "schr" "sj" "sk" "sm" "sn" "sp" "spl" "spr" "st" "str" "sw" "t" "tj" "tr" "ts" "tsj" "tw" "v" "vl" "vr" "w" "wr" "z" "zw"
 dict nucleus "a" "aa" "au" "e" "ee" "ei" "eu" "i" "ie" "ij" "o" "oo" "oe" "ou" "u" "ui" "uu"
 dict coda "b" "bs" "bt" "ch" "cht" "d" "ds" "f" "fd" "fs" "fst" "ft" "g" "gd" "gs" "gst" "gt" "k" "ks" "kt" "l" "ld" "lds" "lf" "lft" "lg" "lk" "lkt"
@@ -9,13 +10,17 @@ expand codaonset coda
 expand codaonset onset
 deduplicate codaonset
 
-expand inner nucleus codaonset inner
-expand inner nucleus
-#print inner
+expand inner nucleus codaonset nucleus codaonset nucleus
+expand inner nucleus codaonset nucleus
+#print inner nucleus
 
 expand word inner
 expand word onset inner
 expand word inner coda
 expand word onset inner coda
 
-terminal word
+expand words word
+expand words word s words
+
+terminal words
+
