@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Gramtropy</title>
 </head>
-<body>
+<body onload="load_file('demo.gram')">
 <script src="generator.js" type="text/javascript"></script>
 <script type="text/javascript">
 generator_create = Module.cwrap('generator_create', 'number', ['string', 'number', 'number']);
@@ -39,21 +39,26 @@ function generator_gen() {
     }
     document.getElementById("results").innerHTML = resstr;
 }
+function load_file(file) {
+    if (file == "") return;
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() { document.getElementById("grammar").value = xmlhttp.responseText; }
+    xmlhttp.open("GET", file, true);
+    xmlhttp.send();
+}
 </script>
 <h3>Grammar</h3>
 <p>
 <textarea rows="20" cols="120" id="grammar">
-symbol con vow cv word
-dict con b c d f g h j k l m n p q r s t v w x z
-dict vow a e i o u
-expand cv con vow
-expand cv con vow cv
-expand word cv
-expand word vow cv
-expand word cv con
-expand word vow cv con
-terminal word
 </textarea>
+</p>
+</p>
+Load grammar: <select id="filesel" onchange="load_file(document.getElementById('filesel').value);">
+  <option value="">Select...</option>
+  <option value="demo.gram">Words alternating between consonant and vowel</option>
+  <option value="silly.gram">Silly sentences</option>
+  <option value="dutch.gram">Hardly pronouncable words</option>
+</select>
 </p>
 <p>
 Bits of entropy: <input type="text" id="bits" value="64" /><br/></p>

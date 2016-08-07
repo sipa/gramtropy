@@ -1,0 +1,17 @@
+# symbol declares which symbols exists
+symbol con vow cv word
+
+# dict allows a symbol to expand to any of the following string literals
+dict con b c d f g h j k l m n p q r s t v w x z
+dict vow a e i o u
+
+# expand allows a symbol to expand to a concatenation of other symbols
+expand cv con vow
+expand cv con vow cv
+expand word cv
+expand word vow cv
+expand word cv con
+expand word vow cv con
+
+# terminal selects the root of the grammar
+terminal word
