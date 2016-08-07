@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-void* generator_create(const char* grammar, int bits);
+void* generator_create(const char* grammar, int bits, char* status);
 int generator_generate(void* gen, char* str, int length);
 void generator_destroy(void* gen);
 

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gramtropy</title>
+</head>
+<body>
+<script src="generator.js" type="text/javascript"></script>
+<script type="text/javascript">
+generator_create = Module.cwrap('generator_create', 'number', ['string', 'number', 'number']);
+generator_generate = Module.cwrap('generator_generate', 'number', ['number', 'number', 'number']);
+generator_destroy = Module.cwrap('generator_destroy', 'none', ['number']);
+var gen;
+var have_gen = 0;
+function generator_compile() {
+    if (have_gen == 1) {
+        generator_destroy(gen);
+    }
+    var stat = Module._malloc(1000);
+    document.getElementById("status").innerHTML = "Compiling...";
+    gen = generator_create(document.getElementById("grammar").value, document.getElementById("bits").value, stat);
+    document.getElementById("status").innerHTML = Module.UTF8ToString(stat);
+    Module._free(stat);
+    have_gen = 1;
+}
+function generator_gen() {
+    var resstr;
+    if (have_gen == 0) {
+        resstr = "[Compile first]"
+    } else {
+        var res = Module._malloc(1000);
+        var ret = generator_generate(gen, res, 1000);
+        if (ret == 0) {
+            resstr = "[Error]";
+        } else {
+            resstr = Module.UTF8ToString(res);
+            Module._free(res);
+        }
+    }
+    document.getElementById("results").innerHTML = resstr;
+}
+</script>
+<h3>Grammar</h3>
+<p>
+<textarea rows="20" cols="120" id="grammar">
+symbol con vow cv word
+dict con b c d f g h j k l m n p q r s t v w x z
+dict vow a e i o u
+expand cv con vow
+expand cv con vow cv
+expand word cv
+expand word vow cv
+expand word cv con
+expand word vow cv con
+terminal word
+</textarea>
+</p>
+<p>
+Bits of entropy: <input type="text" id="bits" value="64" /><br/></p>
+<button type="button" onclick="generator_compile();">Compile</button> <a id="status"></a>
+
+<h3>Results</h3>
+<button type="button" onclick="generator_gen();">Generator</button>
+<p>
+<a id="results"></a>
+</p>
+</body>
+</html>

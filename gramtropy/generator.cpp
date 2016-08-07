@@ -667,8 +667,14 @@ public:
 }
 
 extern "C" {
-void* generator_create(const char* grammar, int bits) {
-    return (void*)new Generator(std::string(grammar), bits);
+void* generator_create(const char* grammar, int bits, char* status) {
+    try {
+        strcpy(status, "Done!");
+        return (void*)new Generator(std::string(grammar), bits);
+    } catch (const std::exception& e) {
+        strcpy(status, e.what());
+        return NULL;
+    }
 }
 
 int generator_generate(void* gen, char* str, int length) {
