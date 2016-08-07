@@ -607,8 +607,7 @@ void RandomInteger(const BigNum& range, BigNum& out) {
     } while (out >= range);
 }
 
-std::vector<std::string> GenerateRandom(const NodeBase* terminal, double bits, int solutions) {
-    ExpansionState state;
+std::string GenerateRandom(ExpansionState& state, const NodeBase* terminal, double bits) {
     std::vector<BigNum> cumulative;
     cumulative.push_back(BigNum());
     double minrange = pow(2.0, bits);
@@ -628,21 +627,17 @@ std::vector<std::string> GenerateRandom(const NodeBase* terminal, double bits, i
                 if (range >= minrange && range * 4 >= cumulative[cost] * 3) {
                     std::cerr << "Using length range [" << (cost - count + 1) << ".." << cost << "]: " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
                     std::vector<std::string> vret;
-                    for (int n = 0; n < solutions; n++) {
-                        BigNum rand;
-                        RandomInteger(range, rand);
-                        rand += cumulative[cost - count];
-                        for (int realcost = cost - count + 1; realcost <= cost; realcost++) {
-                            if (rand < cumulative[realcost]) {
-                                std::vector<char> ret;
-                                rand -= cumulative[realcost - 1];
-                                terminal->Expand(-1, state, realcost, rand, ret);
-                                vret.push_back(std::string(ret.begin(), ret.end()));
-                                break;
-                            }
+                    BigNum rand;
+                    RandomInteger(range, rand);
+                    rand += cumulative[cost - count];
+                    for (int realcost = cost - count + 1; realcost <= cost; realcost++) {
+                        if (rand < cumulative[realcost]) {
+                            std::vector<char> ret;
+                            rand -= cumulative[realcost - 1];
+                            terminal->Expand(-1, state, realcost, rand, ret);
+                            return std::string(ret.begin(), ret.end());
                         }
                     }
-                    return vret;
                 }
             }
         }
@@ -666,8 +661,9 @@ int main(int argc, char** argv) {
         bits += (1.0 / num + log(num) - 1.0) / log(2.0);
     }
 
-    for (const auto& str : GenerateRandom(terminal, bits, num)) {
-        std::cout << str << "\n";
+    ExpansionState state;
+    for (unsigned int i = 0; i < num; i++) {
+        std::cout << GenerateRandom(state, terminal, bits) << "\n";
     }
     return 0;
 }
