@@ -1,18 +1,22 @@
-#include <assert.h>
 #include <map>
+#include <stdint.h>
 #include <vector>
 #include <string>
-#include <set>
-#include <map>
-#include <iostream>
 #include <sstream>
-#include <fstream>
 #include <stdlib.h>
-#include <memory>
+#include <set>
 #include <math.h>
+#include <iostream>
+#include <memory>
+#include <fstream>
+#include <stdexcept>
+#include <string.h>
 
-#include "gramtropy/bignum.h"
-#include "gramtropy/stringvector.h"
+#include "generator.h"
+
+namespace {
+#include "bignum.h"
+#include "stringvector.h"
 
 struct ExpansionInfo {
     BigNum combinations;
@@ -45,8 +49,6 @@ struct ExpansionState {
     std::set<ExpansionRef> printed;
     std::set<ExpansionRef> in_flight;
 };
-
-bool Deduplicate(ExpansionState& state, const NodeBase* node, uint32_t cost, const BigNum* combinations, std::set<std::vector<char> >& s, std::vector<char>* duplicate);
 
 static const BigNum zero;
 
@@ -608,13 +610,21 @@ void RandomInteger(const BigNum& range, BigNum& out) {
 }
 
 class Generator {
+    Grammar gram;
     const NodeBase* terminal;
     mutable ExpansionState state;
     int maxcost;
     BigNum range;
 
 public:
-    Generator(const NodeBase* term, double bits) : terminal(term) {
+    Generator(const std::string&& grammar, double bits) {
+        std::istringstream in(std::move(grammar));
+        Parse(in, &gram);
+        terminal = gram.GetTerminal();
+        if (terminal == NULL) {
+            throw std::runtime_error("No terminal symbol selected");
+        }
+
         std::vector<BigNum> cumulative;
         cumulative.push_back(BigNum());
         double minrange = pow(2.0, bits);
@@ -660,26 +670,21 @@ public:
         throw std::runtime_error("Failed to generate");
     }
 };
+}
 
-int main(int argc, char** argv) {
-    Grammar grammar;
-    Parse(std::cin, &grammar);
+extern "C" {
+void* generator_create(const char* grammar, int bits) {
+    return (void*)new Generator(std::string(grammar), bits);
+}
 
-    const NodeBase* terminal = grammar.GetTerminal();
-    if (terminal == NULL) {
-        throw std::runtime_error("No terminal symbol selected");
-    }
+int generator_generate(void* gen, char* str, int length) {
+    std::string s = ((Generator*)gen)->Generate();
+    if ((int)s.size() >= length) return 0;
+    memcpy(str, s.c_str(), s.size() + 1);
+    return 1;
+}
 
-    unsigned long num = argc > 2 ? strtoul(argv[2], NULL, 10) : 1;
-    double bits = argc > 1 ? strtod(argv[1], NULL) : 64;
-
-    if (num > 1) {
-        bits += (1.0 / num + log(num) - 1.0) / log(2.0);
-    }
-
-    Generator gen(terminal, bits);
-    for (unsigned int i = 0; i < num; i++) {
-        std::cout << gen.Generate() << "\n" << std::flush;
-    }
-    return 0;
+void generator_destroy(void* gen) {
+    delete (Generator*)gen;
+}
 }
