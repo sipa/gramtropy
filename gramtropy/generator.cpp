@@ -2,13 +2,10 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
-#include <sstream>
 #include <stdlib.h>
 #include <set>
 #include <math.h>
-#include <iostream>
 #include <memory>
-#include <fstream>
 #include <stdexcept>
 #include <string.h>
 
@@ -61,12 +58,6 @@ protected:
     virtual void ComputeExpansion(int level, ExpansionState& state, const ExpansionRef& ref, const BigNum& num, std::vector<char>& ret) const =0;
 
 public:
-    std::string Describe(const ExpansionRef& ref) const {
-        std::stringstream ss;
-        ss << description << " (cost " << ref.cost << ")";
-        return ss.str();
-    }
-
     std::string Describe() const {
         return description;
     }
@@ -86,13 +77,7 @@ public:
         ExpansionRef ref(this, cost);
         const BigNum* comb = ComputeCombinations(state, ref);
         if (comb == NULL || num >= *comb) {
-            throw std::runtime_error("Impossible combination requested for " + Describe(ref));
-        }
-        if (level >= 0) {
-            for (int i = 0; i < level; i++) {
-                std::cerr << "  ";
-            };
-            std::cerr << "* " << Describe(ref) << "[" << num.hex() << "]\n";
+            throw std::runtime_error("Impossible combination requested for " + Describe());
         }
         ComputeExpansion(level >= 0 ? level + 1 : level, state, ref, num, ret);
     }
@@ -240,7 +225,7 @@ protected:
                 num_copy -= mult_combinations;
             }
         }
-        throw std::runtime_error("Expansion beyond concatenation combinations for " + Describe(ref));
+        throw std::runtime_error("Expansion beyond concatenation combinations for " + Describe());
     }
 
 public:
@@ -255,7 +240,7 @@ private:
 protected:
     const BigNum* ComputeCombinations(ExpansionState& state, const ExpansionRef& ref) const override {
         if (reference == NULL) {
-            throw std::runtime_error("Evaluating undefined reference for" + Describe(ref));
+            throw std::runtime_error("Evaluating undefined reference for" + Describe());
         }
         return reference->Combinations(state, ref.cost);
     }
@@ -291,7 +276,7 @@ protected:
             return NULL;
         }
         if (*comb > 1000000) {
-            throw std::runtime_error("Deduplication of " + comb->hex() + " combinations requested for " + Describe(ref));
+            throw std::runtime_error("Deduplication of " + comb->hex() + " combinations requested for " + Describe());
         }
         Deduplicate(-1, state, reference, ref.cost, *comb, s, NULL);
         StringVector& strv = state.deduplications[ref].dict;
@@ -325,7 +310,7 @@ protected:
             std::set<std::vector<char> > s;
             std::vector<char> ret;
             if (*comb < 1000 && Deduplicate(-1, state, reference, ref.cost, *comb, s, &ret)) {
-                throw std::runtime_error("Ambiguous expansion for " + Describe(ref) + ": " + std::string(ret.begin(), ret.end()));
+                throw std::runtime_error("Ambiguous expansion for " + Describe() + ": " + std::string(ret.begin(), ret.end()));
             }
             state.unique_verified.insert(ref);
         }
@@ -354,11 +339,11 @@ protected:
             std::set<std::vector<char> > s;
             if (*comb < 10000) {
                 Deduplicate(-1, state, reference, ref.cost, *comb, s, NULL);
-                std::cout << "Dump for " << Describe(ref) << ": ";
+                printf("Dump for %s (cost %i): ", Describe().c_str(), ref.cost);
                 for (const std::vector<char>& ss : s) {
-                    std::cout << std::string(ss.begin(), ss.end()) << " ";
+                    printf("%.*s ", (int)ss.size(), &ss[0]);
                 }
-                std::cout << "\n";
+                printf("\n");
             }
             state.printed.insert(ref);
         }
@@ -546,10 +531,18 @@ bool ParseLine(const std::string& in, std::vector<std::string>& out) {
     return true;
 }
 
-bool Parse(std::istream& in, Grammar* outset) {
+
+bool Parse(const std::string& text, Grammar* outset) {
     GrammarBuilder builder(outset);
-    std::string line;
-    while (std::getline(in, line)) {
+    size_t pos = 0;
+    do {
+        size_t epos = text.find('\n', pos);
+        std::string line = text.substr(pos, epos == std::string::npos ? epos : epos - pos);
+        if (epos == std::string::npos) {
+            pos = epos;
+        } else {
+            pos = epos + 1;
+        }
         if (line.size() == 0 || line[0] == '#') {
             continue;
         }
@@ -591,7 +584,8 @@ bool Parse(std::istream& in, Grammar* outset) {
             continue;
         }
         throw std::runtime_error("Unparsable line: " + line);
-    }
+    } while (pos != std::string::npos);
+
     return true;
 }
 
@@ -599,14 +593,18 @@ void RandomInteger(const BigNum& range, BigNum& out) {
     int bits = range.bits();
     std::vector<uint8_t> data;
     data.resize((bits + 7)/8);
-    std::ifstream rng("/dev/urandom", std::ios::binary);
+    FILE* rng = fopen("/dev/urandom", "rb");
     do {
-        rng.read((char*)&data[0], data.size());
+        size_t r = fread(&data[0], data.size(), 1, rng);
+        if (r != 1) {
+            throw std::runtime_error("Unable to read from RNG");
+        }
         if (bits % 8) {
             data[0] >>= (8 - (bits % 8));
         }
         out = BigNum(&data[0], data.size());
     } while (out >= range);
+    fclose(rng);
 }
 
 class Generator {
@@ -617,9 +615,8 @@ class Generator {
     BigNum range;
 
 public:
-    Generator(const std::string&& grammar, double bits) {
-        std::istringstream in(std::move(grammar));
-        Parse(in, &gram);
+    Generator(const std::string& grammar, double bits) {
+        Parse(grammar, &gram);
         terminal = gram.GetTerminal();
         if (terminal == NULL) {
             throw std::runtime_error("No terminal symbol selected");
@@ -636,13 +633,11 @@ public:
             BigNum ccomb = *comb;
             ccomb += cumulative.back();
             cumulative.push_back(std::move(ccomb));
-            // std::cerr << "Length " << cost << ": " << comb->hex() << " [" << log(comb->get_d())/log(2) << "] (cumulative " << cumulative.back().hex() << " [" << log(cumulative.back().get_d())/log(2.0) << ", " << log(cumulative.back().get_d())/log(2.0)/cost << "])" << std::endl;
             if (cumulative[cost].get_d() * 0.75 >= minrange) {
                 for (int count = 1; count <= cost; count++) {
                     range = cumulative[cost];
                     range -= cumulative[cost - count];
                     if (range >= minrange && range * 4 >= cumulative[cost] * 3) {
-                        // std::cerr << "Using length range [" << (cost - count + 1) << ".." << cost << "]: " << range.hex() << ", " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
                         maxcost = cost;
                         return;
                     }
@@ -655,7 +650,6 @@ public:
     std::string Generate() const {
         BigNum rand;
         RandomInteger(range, rand);
-        // std::cerr << "Range=" << range.hex() << " rand=" << rand.hex() << "\n";
         int cost = maxcost;
         while (cost > 0) {
             const BigNum* comb = terminal->Combinations(state, cost);
