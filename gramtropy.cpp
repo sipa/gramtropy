@@ -607,43 +607,59 @@ void RandomInteger(const BigNum& range, BigNum& out) {
     } while (out >= range);
 }
 
-std::string GenerateRandom(ExpansionState& state, const NodeBase* terminal, double bits) {
-    std::vector<BigNum> cumulative;
-    cumulative.push_back(BigNum());
-    double minrange = pow(2.0, bits);
-    for (int cost = 1; cost < 1000; cost++) {
-        const BigNum* comb = terminal->Combinations(state, cost);
-        if (comb == NULL) {
-            throw std::runtime_error("Recursion detected");
-        }
-        BigNum ccomb = *comb;
-        ccomb += cumulative.back();
-        cumulative.push_back(std::move(ccomb));
-        std::cerr << "Length " << cost << ": " << comb->hex() << " [" << log(comb->get_d())/log(2) << "] (cumulative " << cumulative.back().hex() << " [" << log(cumulative.back().get_d())/log(2.0) << ", " << log(cumulative.back().get_d())/log(2.0)/cost << "])" << std::endl;
-        if (cumulative[cost].get_d() * 0.75 >= minrange) {
-            for (int count = 1; count <= cost; count++) {
-                BigNum range = cumulative[cost];
-                range -= cumulative[cost - count];
-                if (range >= minrange && range * 4 >= cumulative[cost] * 3) {
-                    std::cerr << "Using length range [" << (cost - count + 1) << ".." << cost << "]: " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
-                    std::vector<std::string> vret;
-                    BigNum rand;
-                    RandomInteger(range, rand);
-                    rand += cumulative[cost - count];
-                    for (int realcost = cost - count + 1; realcost <= cost; realcost++) {
-                        if (rand < cumulative[realcost]) {
-                            std::vector<char> ret;
-                            rand -= cumulative[realcost - 1];
-                            terminal->Expand(-1, state, realcost, rand, ret);
-                            return std::string(ret.begin(), ret.end());
-                        }
+class Generator {
+    const NodeBase* terminal;
+    mutable ExpansionState state;
+    int maxcost;
+    BigNum range;
+
+public:
+    Generator(const NodeBase* term, double bits) : terminal(term) {
+        std::vector<BigNum> cumulative;
+        cumulative.push_back(BigNum());
+        double minrange = pow(2.0, bits);
+        for (int cost = 1; cost < 1000; cost++) {
+            const BigNum* comb = terminal->Combinations(state, cost);
+            if (comb == NULL) {
+                throw std::runtime_error("Recursion detected");
+            }
+            BigNum ccomb = *comb;
+            ccomb += cumulative.back();
+            cumulative.push_back(std::move(ccomb));
+            // std::cerr << "Length " << cost << ": " << comb->hex() << " [" << log(comb->get_d())/log(2) << "] (cumulative " << cumulative.back().hex() << " [" << log(cumulative.back().get_d())/log(2.0) << ", " << log(cumulative.back().get_d())/log(2.0)/cost << "])" << std::endl;
+            if (cumulative[cost].get_d() * 0.75 >= minrange) {
+                for (int count = 1; count <= cost; count++) {
+                    range = cumulative[cost];
+                    range -= cumulative[cost - count];
+                    if (range >= minrange && range * 4 >= cumulative[cost] * 3) {
+                        // std::cerr << "Using length range [" << (cost - count + 1) << ".." << cost << "]: " << range.hex() << ", " << (log(range.get_d()) / log(2.0)) << " bits of entropy\n";
+                        maxcost = cost;
+                        return;
                     }
                 }
             }
         }
+        throw std::runtime_error("Maximum length exceeded");
     }
-    throw std::runtime_error("No solutions found\n");
-}
+
+    std::string Generate() const {
+        BigNum rand;
+        RandomInteger(range, rand);
+        // std::cerr << "Range=" << range.hex() << " rand=" << rand.hex() << "\n";
+        int cost = maxcost;
+        while (cost > 0) {
+            const BigNum* comb = terminal->Combinations(state, cost);
+            if (rand < *comb) {
+                std::vector<char> ret;
+                terminal->Expand(-1, state, cost, rand, ret);
+                return std::string(ret.begin(), ret.end());
+            }
+            rand -= *comb;
+            cost--;
+        }
+        throw std::runtime_error("Failed to generate");
+    }
+};
 
 int main(int argc, char** argv) {
     Grammar grammar;
@@ -661,9 +677,9 @@ int main(int argc, char** argv) {
         bits += (1.0 / num + log(num) - 1.0) / log(2.0);
     }
 
-    ExpansionState state;
+    Generator gen(terminal, bits);
     for (unsigned int i = 0; i < num; i++) {
-        std::cout << GenerateRandom(state, terminal, bits) << "\n";
+        std::cout << gen.Generate() << "\n" << std::flush;
     }
     return 0;
 }

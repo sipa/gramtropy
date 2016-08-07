@@ -65,6 +65,7 @@ public:
         for (unsigned i = 0; i < len; i++) {
             pn[i / 4] |= ((uint32_t)data[len - 1 - i]) << (8 * i);
         }
+        shrink();
     }
 
     BigNum& operator+=(const BigNum& b) {
