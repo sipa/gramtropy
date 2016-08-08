@@ -1,0 +1,36 @@
+# Author: Andrew Poelstra
+symbol s letter_s connect noun nounpart nounpartplur adjective article sentence sentencepart verb nounplur verbplur verbnontransplur verbnontrans
+
+dict s " "
+dict letter_s "s"
+dict article "the" "some" "this" "that" "his" "her" "their"
+dict connect "still" "and" "but" "thus" "hence" "yet" "considering" "while" "so"
+
+dict noun "ailment" "failure" "mail" "quail" "pail" "bale" "dale" "gale" "grail" "hail" "jail" "nail" "sail" "sale" "scale" "snail" "tail" "tale" "trail" "rail" "cocktail" "monorail" "thumbnail" "ale" "bobtail" "flail" "hangnail" "hobnail" "pigtail" "ponytail" "whale" "toenail" "topsail" "kale" "nightingale" "resale" "tattletale" "timescale" "vale"
+dict adjective "ailing" "failing" "wailing" "whaling" "stale" "railing" "male" "female" "braille" "pale" "shale" "frail" "retail" "emailing" "derailing" "downscale" "telltale" "upscale" "wholesale" "flailing"
+
+dict verbnontransplur "prevail" "travail" "exhale" "wail" "fishtail" "dovetail" "bail"
+expand verbnontrans verbnontransplur letter_s
+dict verbplur "avail" "fail" "derail" "email" "detail" "blackmail" "entail" "curtail" "bewail" "assail" "impale"
+expand verb verbplur letter_s
+
+expand nounplur noun letter_s
+
+expand nounpart article s adjective s noun
+expand nounpart article s noun
+expand nounpartplur article s adjective s nounplur
+expand nounpartplur adjective s nounplur
+expand nounpartplur nounplur
+
+expand sentencepart nounpart s verb
+expand sentencepart nounpart s verbnontrans
+expand sentencepart nounpart s verb s nounpart
+
+expand sentencepart nounpartplur s verbplur
+expand sentencepart nounpartplur s verbnontransplur
+expand sentencepart nounpartplur s verbplur s nounpartplur
+
+expand sentence sentencepart
+expand sentence sentencepart s connect s sentence
+
+terminal sentence
