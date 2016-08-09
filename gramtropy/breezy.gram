@@ -1,0 +1,59 @@
+# symbol declares which symbols exists
+symbol _ for of the these start conj sentence subj_sing subj_plur pred_sing pred_plur noun_sing_actor noun_plur_actor noun_sing_emote verb_sing_trans verb_plur_trans verb_sing_nontrans verb_plur_nontrans prop adj_sing_post adj_plur_post
+
+# Individual words
+dict _ " "
+dict for "for"
+dict of "of"
+dict the "the"
+dict these "these"
+
+# Parts of speech
+dict start eh hmm uh um so well mkay geez jeez see right good ah haha gosh
+dict conj and or thus then while
+
+# "for _ of..."
+dict noun_sing_emote ease need glee
+
+dict noun_sing_actor bee breeze brie cheese disease flea grease key knee pea peace plea sea sleaze tea tree chickpea idea fee amputee absentee chimpanzee decree degree goatee jubilee lychee payee rupee spree trustee
+dict noun_plur_actor bees breezes capris cheeses fleas greases keys knees measles peas pleas seas skis teas trees chickpeas fees amputees absentees chimpanzees decrees degrees goatees jubilees lychees payees rupees sprees trustees
+
+# cease?
+dict verb_sing_nontrans ceases wheezes agrees flees
+dict verb_plur_nontrans cease wheeze flee
+dict verb_sing_trans appeases frees freezes creases increases decreases pleases seizes squeezes teases
+dict verb_plur_trans appease free freeze crease increase decrease please seize squeeze tease
+
+# expand allows a symbol to expand to a concatenation of other symbols
+
+# propositions
+expand prop for _ noun_sing_emote _ of _ noun_sing_actor
+expand prop for _ noun_sing_emote _ of _ these _ noun_plur_actor
+
+# adjectives that appear -after- the noun they modify
+expand adj_sing_post _ prop
+expand adj_plur_post _ prop
+
+expand subj_sing the _ noun_sing_actor
+expand subj_sing the _ noun_sing_actor _ adj_sing_post
+
+expand subj_plur noun_plur_actor
+expand subj_plur noun_plur_actor _ adj_plur_post
+expand subj_plur these _ subj_plur
+
+expand pred_sing verb_sing_nontrans
+expand pred_sing verb_sing_trans _ subj_sing
+expand pred_sing verb_sing_trans _ subj_plur
+
+expand pred_plur verb_plur_nontrans
+expand pred_plur verb_plur_trans _ subj_sing
+expand pred_plur verb_plur_trans _ subj_plur
+
+expand sentence subj_sing _ pred_sing
+expand sentence start _ subj_sing _ pred_sing
+expand sentence start _ start _ subj_sing _ pred_sing
+#expand sentence start _ start _ start _ subj_sing _ pred_sing
+expand sentence sentence _ conj _ sentence
+
+# terminal selects the root of the grammar
+terminal sentence
