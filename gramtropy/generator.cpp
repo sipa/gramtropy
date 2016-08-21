@@ -15,6 +15,8 @@ namespace {
 #include "bignum.h"
 #include "stringvector.h"
 
+#include "graph.h"
+
 struct ExpansionInfo {
     BigNum combinations;
 };

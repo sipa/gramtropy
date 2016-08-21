@@ -1,6 +1,7 @@
 #ifndef _GRAMTROPY_BIGNUM_H_
 #define _GRAMTROPY_BIGNUM_H_
 
+#include <string>
 #include <vector>
 #include <stdint.h>
 
@@ -26,7 +27,7 @@ class BigNum {
 
     void shift_left(int shift) {
         std::vector<uint32_t> r;
-        r.resize((bits() + shift + 31) / 32);
+        r.resize(pn.size() + (shift + 31) / 32);
         int k = shift / 32;
         shift %= 32;
         for (unsigned int i = 0; i < pn.size(); i++) {
@@ -117,6 +118,11 @@ public:
         return r;
     }
 
+    BigNum& operator*=(const BigNum& b) {
+        *this = *this * b;
+        return *this;
+    }
+
     int bits() const {
         if (pn.size() == 0) return 0;
         int ret = pn.size() * 32;
@@ -160,6 +166,9 @@ public:
     }
 
     std::string hex() const {
+        if (is_zero()) {
+            return "0";
+        }
         static const char cv[16] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
         unsigned int digits = (bits() + 3) / 4;
         std::string ret;
