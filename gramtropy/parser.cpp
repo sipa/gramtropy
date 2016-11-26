@@ -328,6 +328,12 @@ public:
 #include "expgraph.h"
 #include "expander.h"
 
+void writenum(uint64_t n, FILE* f) {
+    do {
+        putc((n & 0x7F) | ((n > 0x7F) << 7), f);
+        n >>= 7;
+    } while (n);
+}
 
 int main(int argc, char** argv) {
     char *buf = (char*)malloc(1048576);
@@ -388,45 +394,41 @@ int main(int argc, char** argv) {
 
     Optimize(expgraph);
 
-/*
-    printf("\nExpansion:\n");
     int cnt = 0;
     std::map<const ExpGraph::Node*, int> dump;
     for (const auto& node : expgraph.nodes) {
         dump[&node] = cnt;
-        printf("%s ", node.count.hex().c_str());
         if (node.nodetype == ExpGraph::Node::NodeType::DICT) {
-            printf("0 %X", (unsigned int)node.dict.size());
+            writenum(4 * node.dict.size(), stdout);
+            writenum(node.dict[0].size(), stdout);
             for (size_t s = 0; s < node.dict.size(); s++) {
                 std::string str = node.dict[s];
-                printf(" %X %.*s", (unsigned int)str.size(), (int)str.size(), str.c_str());
+                fwrite(str.data(), str.size(), 1, stdout);
             }
         } else if (node.nodetype == ExpGraph::Node::NodeType::CONCAT) {
-            printf("1 %X", (unsigned int)node.refs.size());
             size_t pos = 0;
+            writenum(4 * node.refs.size() + 1, stdout);
             for (size_t s = 0; s < node.refs.size(); s++) {
-                printf(" %X %X", (unsigned int)pos, cnt - dump[&*node.refs[s]]);
+                writenum(pos, stdout);
+                writenum(cnt - dump[&*node.refs[s]] - 1, stdout);
                 assert(node.refs[s]->len >= 0);
                 pos += node.refs[s]->len;
             }
         } else {
-            printf("2 %X", (unsigned int)node.refs.size());
+            writenum(4 * node.refs.size() + 2, stdout);
             for (size_t s = 0; s < node.refs.size(); s++) {
-                printf(" %X", cnt - dump[&*node.refs[s]]);
+                writenum(cnt - dump[&*node.refs[s]] - 1, stdout);
             }
         }
-        printf(" ");
         cnt++;
     }
-    printf("- main = node%i\n", dump[&*emain]);
-*/
 
-    printf("%lu node model, %s combinations\n", (unsigned long)expgraph.nodes.size(), emain->count.hex().c_str());
+    fprintf(stderr, "%lu node model, %s combinations\n", (unsigned long)expgraph.nodes.size(), emain->count.hex().c_str());
 
-    for (int i = 0; i < 100; i++) {
+/*    for (int i = 0; i < 100; i++) {
         std::string str = Generate(emain);
         printf("Res: %s\n", str.c_str());
-    }
+    }*/
 
     emain = ExpGraph::Ref();
     main = Graph::Ref();
