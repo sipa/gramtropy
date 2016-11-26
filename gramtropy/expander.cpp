@@ -20,7 +20,7 @@ void Expander::AddDep(const Key& key, const ThunkRef& parent) {
     }
 }
 
-void Expander::ProcessThunk(const ThunkRef& ref) {
+void Expander::ProcessThunk(ThunkRef ref) {
 //    fprintf(stderr, "Processing thunk %p\n", &*ref);
     if (ref->done) {
 //        fprintf(stderr, "  done\n");
@@ -75,20 +75,36 @@ void Expander::ProcessThunk(const ThunkRef& ref) {
 //            fprintf(stderr, "    concat n=%i\n", (int)ref->key.ref->refs.size());
             ref->nodetype = ExpGraph::Node::NodeType::DISJUNCT;
             for (size_t s = 0; s <= ref->key.len; s++) {
+                Key key1(s, ref->key.ref->refs[ref->key.offset]);
+                Key key2;
+                if (ref->key.ref->refs.size() == 2 + ref->key.offset) {
+                    key2 = Key(ref->key.len - s, ref->key.ref->refs[ref->key.offset + 1]);
+                } else {
+                    key2 = Key(ref->key.len - s, ref->key.ref, ref->key.offset + 1);
+                }
+                auto fnd1 = thunkmap.find(key1), fnd2 = thunkmap.find(key2);
+                if (fnd1 != thunkmap.end() && fnd1->second->done && !fnd1->second->result) {
+                    continue;
+                }
+                if (fnd2 != thunkmap.end() && fnd2->second->done && !fnd2->second->result) {
+                    continue;
+                }
                 auto sub = thunks.emplace_back();
                 ref->deps.push_back(sub);
                 sub->forward.insert(ref);
                 sub->nodetype = ExpGraph::Node::NodeType::CONCAT;
-                Key key1(s, ref->key.ref->refs[ref->key.offset]);
-                AddDep(key1, sub);
-                if (ref->key.ref->refs.size() == 2 + ref->key.offset) {
-                    Key key2(ref->key.len - s, ref->key.ref->refs[ref->key.offset + 1]);
+                if (key1.len <= key2.len) {
+                    AddDep(key1, sub);
                     AddDep(key2, sub);
                 } else {
-                    Key key2(ref->key.len - s, ref->key.ref, ref->key.offset + 1);
                     AddDep(key2, sub);
+                    AddDep(key1, sub);
+                    sub->deps[0].swap(sub->deps[1]);
                 }
-                AddTodo(sub);
+                AddTodo(sub, true);
+            }
+            if (ref->deps.size() == 0) {
+                ref->done = true;
             }
             break;
         default:
@@ -174,13 +190,14 @@ void Expander::ProcessThunk(const ThunkRef& ref) {
 }
 
 void Expander::AddTodo(const ThunkRef& ref, bool priority) {
-    auto ret = todo_set.insert(ref);
-    if (ret.second) {
-        if (priority) {
-            todo.push_front(ret.first);
-        } else {
-            todo.push_back(ret.first);
-        }
+    if (ref->todo) {
+        return;
+    }
+    ref->todo = true;
+    if (priority) {
+        todo.push_front(ref);
+    } else {
+        todo.push_back(ref);
     }
 }
 
@@ -194,12 +211,11 @@ ExpGraph::Ref Expander::Expand(const Graph::Ref& ref, size_t len) {
         if (todo.empty()) {
             assert(!"Nothing to process left");
         }
-        auto nowit = todo.front();
+        ThunkRef now = std::move(todo.front());
         todo.pop_front();
-        auto now = *nowit;
-        todo_set.erase(nowit);
+        now->todo = false;
 
-        ProcessThunk(now);
+        ProcessThunk(std::move(now));
     }
 
     fprintf(stderr, "%i thunks left todo\n", (int)todo.size());

@@ -18,7 +18,7 @@ class Expander {
     struct Key {
         size_t len;
         size_t offset;
-        Graph::Ref ref;
+        const Graph::Node* ref;
 
         friend bool operator==(const Key& x, const Key& y) {
             return x.len == y.len && x.offset == y.offset && x.ref == y.ref;
@@ -28,8 +28,9 @@ class Expander {
             return x.len < y.len || (x.len == y.len && ((x.offset == y.offset && x.ref < y.ref) || x.offset < y.offset));
         }
 
-        Key() : len(0), offset(0) {}
-        Key(size_t len_, const Graph::Ref& ref_, size_t offset_ = 0) : len(len_), offset(offset_), ref(ref_) {}
+        Key() : len(0), offset(0), ref(nullptr) {}
+        Key(size_t len_, const Graph::Ref& ref_, size_t offset_ = 0) : len(len_), offset(offset_), ref(&*ref_) {}
+        Key(size_t len_, const Graph::Node* ref_, size_t offset_ = 0) : len(len_), offset(offset_), ref(ref_) {}
     };
 
     ExpGraph::Ref empty;
@@ -40,6 +41,7 @@ class Expander {
     struct Thunk {
         bool need_expansion;
         bool done;
+        bool todo;
 
         Expander::Key key;
         ExpGraph::Node::NodeType nodetype;
@@ -47,18 +49,17 @@ class Expander {
         std::vector<ThunkRef> deps;
         std::set<ThunkRef> forward;
 
-        Thunk(const Expander::Key& key_) : need_expansion(true), done(false), key(key_) {}
-        Thunk() : need_expansion(false), done(false) {}
+        Thunk(const Expander::Key& key_) : need_expansion(true), done(false), todo(false), key(key_) {}
+        Thunk() : need_expansion(false), done(false), todo(false) {}
     };
 
     rclist<Thunk> thunks;
-    std::set<ThunkRef> todo_set;
-    std::deque<std::set<ThunkRef>::iterator> todo;
+    std::deque<ThunkRef> todo;
     std::map<Key, ThunkRef> thunkmap;
 
     void AddTodo(const ThunkRef& ref, bool priority = false);
     void AddDep(const Key& key, const ThunkRef& parent);
-    void ProcessThunk(const ThunkRef& ref);
+    void ProcessThunk(ThunkRef ref);
 
 public:
     Expander(const Graph* graph_, ExpGraph* expgraph_) : graph(graph_), expgraph(expgraph_) {}

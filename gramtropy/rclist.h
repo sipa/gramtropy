@@ -114,6 +114,10 @@ class rclist {
             return ptr->count;
         }
 
+        void swap(base_iterator& x) {
+            std::swap(ptr, x.ptr);
+        }
+
         bool defined() const {
             return ptr != nullptr;
         }
