@@ -1,6 +1,8 @@
 #include "parser.h"
 #include "expgraph.h"
+#include "export.h"
 #include <map>
+#include <math.h>
 
 namespace {
 
@@ -388,12 +390,14 @@ int main(int argc, char** argv) {
 
     Optimize(expgraph);
 
-    fprintf(stderr, "%lu node model, %s combinations\n", (unsigned long)expgraph.nodes.size(), emain->count.hex().c_str());
+    fprintf(stderr, "%lu node model, %s combinations (%g bits)\n", (unsigned long)expgraph.nodes.size(), emain->count.hex().c_str(), log2(emain->count.get_d()));
 
 /*    for (int i = 0; i < 100; i++) {
         std::string str = Generate(emain);
         printf("Res: %s\n", str.c_str());
     }*/
+
+    Export(expgraph, emain, stdout);
 
     emain = ExpGraph::Ref();
     main = Graph::Ref();

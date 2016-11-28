@@ -5,6 +5,6 @@
 
 #include "expgraph.h"
 
-void Export(const ExpGraph::Ref& ref, FILE* file);
+void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file);
 
 #endif
