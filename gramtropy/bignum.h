@@ -1,6 +1,7 @@
 #ifndef _GRAMTROPY_BIGNUM_H_
 #define _GRAMTROPY_BIGNUM_H_
 
+#include <math.h>
 #include <string>
 #include <vector>
 #include <stdint.h>
@@ -176,6 +177,15 @@ public:
             ret = cv[(pn[i / 8] >> (4 * (i % 8))) % 16] + ret;
         }
         return ret;
+    }
+
+    double log2() const {
+        double ret = 0;
+        unsigned int i = 0;
+        for (; i < pn.size() && i < 4; i++) {
+            ret = ret * 4294967296.0 + pn[pn.size() - i - 1];
+        }
+        return log(ret) * 1.442695040888963407359924681 + (pn.size() - i) * 32.0;
     }
 
     double get_d() const {

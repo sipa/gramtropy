@@ -160,7 +160,7 @@ size_t Generate(std::vector<char>& out, size_t pos, const ExpGraph::Ref& ref, Bi
         assert(num.bits() <= 32);
         uint32_t n = num.get_ui();
         auto it = ref->dict.begin();
-        while (--n) ++it;
+        while (n--) ++it;
         memcpy(out.data() + pos, it->data(), it->size());
         return pos + ref->len;
     }
