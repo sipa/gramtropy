@@ -89,7 +89,7 @@ namespace {
             node->nodetype = Graph::Node::NONE;
             return true;
         }
-        if (node->dict.size() == 1 && node->dict[0].size() == 0) {
+        if (node->dict.size() == 1 && node->dict.begin()->size() == 0) {
             node->nodetype = Graph::Node::EMPTY;
             node->dict.clear();
             return true;
@@ -97,7 +97,7 @@ namespace {
         return false;
     }
 
-    static void CollapseDisjunct(Graph* graph, const Graph::Ref& node, std::vector<std::string>& dict, std::vector<Graph::Ref>& refs) {
+    static void CollapseDisjunct(Graph* graph, const Graph::Ref& node, std::set<std::string>& dict, std::vector<Graph::Ref>& refs) {
         assert(node->nodetype == Graph::Node::DISJUNCT);
         for (Graph::Ref& ref : node->refs) {
             if (ref->nodetype == Graph::Node::NONE) continue;
@@ -107,7 +107,7 @@ namespace {
                 if (dict.size() < ref->dict.size()) {
                     dict.swap(ref->dict);
                 }
-                dict.insert(dict.end(), ref->dict.begin(), ref->dict.end());
+                dict.insert(ref->dict.begin(), ref->dict.end());
             } else if (ref->nodetype == Graph::Node::CONCAT && ref->refs.size() == 1) {
                 refs.emplace_back(ref->refs[0]);
             } else {
@@ -156,7 +156,7 @@ namespace {
             return false;
         }
         std::vector<Graph::Ref> refs;
-        std::vector<std::string> dict;
+        std::set<std::string> dict;
         CollapseDisjunct(graph, node, dict, refs);
         if (dict.size() == 0 && refs.size() == 1 && refs[0].unique()) {
             node->refs = std::move(refs[0]->refs);
@@ -299,7 +299,7 @@ std::string Describe(Graph& graph, const Graph::Ref& ref) {
     return Describe(&graph, ref);
 }
 
-Graph::Ref Graph::NewDict(std::vector<std::string>&& dict) {
+Graph::Ref Graph::NewDict(std::set<std::string>&& dict) {
     Graph::Ref ret = NewNode(Graph::Node::DICT);
     ret->dict = std::move(dict);
     Optimize(this, ret);

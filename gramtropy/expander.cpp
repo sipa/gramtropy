@@ -47,10 +47,10 @@ void Expander::ProcessThunk(ThunkRef ref) {
             }
             break;
         case Graph::Node::NodeType::DICT: {
-            std::vector<std::string> vec;
+            std::set<std::string> vec;
             for (const auto& str : ref->key.ref->dict) {
                 if (str.size() == ref->key.len) {
-                    vec.push_back(str);
+                    vec.insert(str);
                 }
             }
             ref->done = true;

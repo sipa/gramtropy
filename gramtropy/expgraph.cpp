@@ -4,19 +4,12 @@
 
 #include <string.h>
 
-ExpGraph::Ref ExpGraph::NewDict(std::vector<std::string>&& dict) {
+ExpGraph::Ref ExpGraph::NewDict(std::set<std::string>&& dict) {
     assert(dict.size() > 0);
     auto ret = nodes.emplace_back(Node::NodeType::DICT);
-    std::set<std::string> strs;
-    for (const std::string& str : dict) {
-        strs.insert(std::move(str));
-    }
-    assert(strs.size() == dict.size());
-    for (const std::string& str: strs) {
-        ret->dict.Append(str);
-    }
+    ret->dict = std::move(dict);
     ret->count = ret->dict.size();
-    ret->len = ret->dict[0].size();
+    ret->len = ret->dict.begin()->size();
     return std::move(ret);
 }
 
@@ -61,24 +54,39 @@ ExpGraph::Ref ExpGraph::NewDisjunct(std::vector<Ref>&& refs) {
 
 namespace {
 
-Strings ExpandDict(const ExpGraph::Ref& ref) {
-    Strings res;
+std::set<std::string> ExpandDict(const ExpGraph::Ref& ref, size_t offset = 0) {
+    std::set<std::string> res;
     switch (ref->nodetype) {
     case ExpGraph::Node::NodeType::DICT:
         return ref->dict;
     case ExpGraph::Node::NodeType::DISJUNCT:
         for (const ExpGraph::Ref& sub : ref->refs) {
-            res += ExpandDict(sub);
+            std::set<std::string> s = ExpandDict(sub);
+            if (s.size() < res.size()) {
+                res.swap(s);
+            }
+            res.insert(s.begin(), s.end());
         }
-        return std::move(res);
+        assert(res.size() == ref->count.get_ui());
+        break;
     case ExpGraph::Node::NodeType::CONCAT:
-        res.Append("");
-        for (const ExpGraph::Ref& sub : ref->refs) {
-            res *= ExpandDict(sub);
+        if (offset + 1 == ref->refs.size()) {
+            return ExpandDict(ref->refs[offset]);
+        } else {
+            std::set<std::string> s1 = ExpandDict(ref->refs[offset]);
+            std::set<std::string> s2 = ExpandDict(ref, offset + 1);
+            for (const auto& str1 : s1) {
+                for (const auto& str2 : s2) {
+                    res.emplace(str1 + str2);
+                }
+            }
         }
-        return std::move(res);
+        if (offset == 0) {
+            assert(res.size() == ref->count.get_ui());
+        }
+        break;
     }
-    assert(false);
+    return std::move(res);
 }
 
 bool Collectable(ExpGraph::Node::NodeType nodetype, const std::vector<ExpGraph::Ref>& input) {
@@ -108,7 +116,6 @@ bool Optimize(const ExpGraph::Ref& ref) {
     case ExpGraph::Node::NodeType::DISJUNCT:
         if (ref->count.bits() <= 13) {
             auto x = ExpandDict(ref);
-            x.Resort();
             ref->dict = std::move(x);
             ref->nodetype = ExpGraph::Node::NodeType::DICT;
             ref->refs.clear();
@@ -152,7 +159,9 @@ size_t Generate(std::vector<char>& out, size_t pos, const ExpGraph::Ref& ref, Bi
     case ExpGraph::Node::NodeType::DICT: {
         assert(num.bits() <= 32);
         uint32_t n = num.get_ui();
-        memcpy(out.data() + pos, &*ref->dict.StringBegin(n), ref->len);
+        auto it = ref->dict.begin();
+        while (--n) ++it;
+        memcpy(out.data() + pos, it->data(), it->size());
         return pos + ref->len;
     }
     case ExpGraph::Node::NodeType::DISJUNCT:
@@ -200,12 +209,17 @@ bool Parse(const ExpGraph::Ref& ref, const char* chr, size_t len, BigNum& out) {
     }
     switch (ref->nodetype) {
     case ExpGraph::Node::NodeType::DICT: {
-        int ret = ref->dict.find(chr, len);
-        if (ret == -1) {
+        auto it = ref->dict.find(std::string(chr, len));
+        if (it == ref->dict.end()) {
 //            fprintf(stderr, "Not find in dict: %.*s\n", (int)len, chr);
             return false;
         }
-        out = ret;
+        uint32_t n = 0;
+        while (it != ref->dict.begin()) {
+            --it;
+            ++n;
+        }
+        out = n;
         return true;
     }
     case ExpGraph::Node::NodeType::DISJUNCT: {

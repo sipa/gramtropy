@@ -26,7 +26,7 @@ class GraphNode {
     GraphNode(NodeType typ) : nodetype(typ) {}
 
     NodeType nodetype;
-    std::vector<std::string> dict;
+    std::set<std::string> dict;
     std::vector<rclist<GraphNode>::fixed_iterator> refs;
 };
 
@@ -40,14 +40,14 @@ public:
     Ref NewNone();
     Ref NewEmpty();
     Ref NewUndefined();
-    Ref NewDict(std::vector<std::string>&& dict);
+    Ref NewDict(std::set<std::string>&& dict);
     Ref NewConcat(std::vector<Ref>&& refs);
     Ref NewDisjunct(std::vector<Ref>&& refs);
 
     template<typename S>
     Ref NewString(S&& str) {
-        std::vector<std::string> l;
-        l.emplace_back(std::forward<S>(str));
+        std::set<std::string> l;
+        l.emplace(std::forward<S>(str));
         return NewDict(std::move(l));
     }
 

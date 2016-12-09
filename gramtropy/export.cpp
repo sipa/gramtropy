@@ -39,9 +39,8 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             double cost = log2(node.dict.size());
 //            fprintf(stderr, "* Dict size %u\n", (unsigned)node.dict.size());
             writenum(4 * node.dict.size(), stdout);
-            writenum(node.dict[0].size(), stdout);
-            for (size_t s = 0; s < node.dict.size(); s++) {
-                std::string str = node.dict[s];
+            writenum(node.len, stdout);
+            for (const auto& str : node.dict) {
                 fwrite(str.data(), str.size(), 1, stdout);
             }
             data.success = cost + 1.0;

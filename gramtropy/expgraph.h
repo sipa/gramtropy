@@ -25,13 +25,13 @@ public:
         NodeType nodetype;
         BigNum count;
         std::vector<Ref> refs;
-        Strings dict;
+        std::set<std::string> dict;
         int len;
 
         Node(NodeType nodetype_) : nodetype(nodetype_), len(-1) {}
     };
 
-    Ref NewDict(std::vector<std::string>&& dict);
+    Ref NewDict(std::set<std::string>&& dict);
     Ref NewConcat(std::vector<Ref>&& refs);
     Ref NewDisjunct(std::vector<Ref>&& refs);
 
