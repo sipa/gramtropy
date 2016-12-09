@@ -40,8 +40,17 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
 //            fprintf(stderr, "* Dict size %u\n", (unsigned)node.dict.size());
             writenum(4 * node.dict.size(), stdout);
             writenum(node.len, stdout);
+            const std::string* prev = nullptr;
             for (const auto& str : node.dict) {
-                fwrite(str.data(), str.size(), 1, stdout);
+                int offset = 0;
+                if (prev != nullptr) {
+                    while (offset < node.len && str[offset] == (*prev)[offset]) {
+                        ++offset;
+                    }
+                    writenum(offset, stdout);
+                }
+                fwrite(str.data() + offset, str.size() - offset, 1, stdout);
+                prev = &str;
             }
             data.success = cost + 1.0;
             data.fail = cost + 2.0;
