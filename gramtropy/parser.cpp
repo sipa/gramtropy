@@ -203,6 +203,9 @@ public:
             case Lexer::Token::OPEN_BRACE: {
                 lexer->Skip();
                 auto res = ParseExpression();
+                if (!res.defined()) {
+                    return Graph::Ref();
+                }
                 if (lexer->PeekType() == Lexer::Token::CLOSE_BRACE) {
                     lexer->Skip();
                     nodes.emplace_back(EXPR, std::move(res));
@@ -217,7 +220,15 @@ public:
                 break;
             case Lexer::Token::SYMBOL: {
                 Lexer::Token tok = lexer->Get();
-                nodes.emplace_back(EXPR, ParseSymbol(std::move(tok.text)));
+                if (tok.text == "dedup" && lexer->PeekType() == Lexer::Token::OPEN_BRACE) {
+                    auto res = ParseExpression();
+                    if (!res.defined()) {
+                        return Graph::Ref();
+                    }
+                    nodes.emplace_back(EXPR, graph->NewDedup(std::move(res)));
+                } else {
+                    nodes.emplace_back(EXPR, ParseSymbol(std::move(tok.text)));
+                }
                 break;
             }
             case Lexer::Token::PIPE:
@@ -246,7 +257,7 @@ public:
                 nodes.back().second = std::move(n);
                 break;
             }
-            case Lexer::Token::QUESTION: {
+            case Lexer::Token::QUESTION:
                 if (nodes.empty() || nodes.back().first != EXPR) {
                     cont = false;
                     break;
@@ -254,7 +265,6 @@ public:
                 lexer->Skip();
                 nodes.back().second = graph->NewDisjunct(symbols["empty"], nodes.back().second);
                 break;
-            }
             default:
                 cont = false;
             }

@@ -38,6 +38,7 @@ public:
     rclist<Node> nodes;
 };
 
+std::set<std::string> Inline(const ExpGraph::Ref& ref);
 void Optimize(ExpGraph& graph);
 
 #endif

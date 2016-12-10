@@ -54,14 +54,14 @@ ExpGraph::Ref ExpGraph::NewDisjunct(std::vector<Ref>&& refs) {
 
 namespace {
 
-std::set<std::string> ExpandDict(const ExpGraph::Ref& ref, size_t offset = 0) {
+std::set<std::string> InlineDict(const ExpGraph::Ref& ref, size_t offset = 0) {
     std::set<std::string> res;
     switch (ref->nodetype) {
     case ExpGraph::Node::NodeType::DICT:
         return ref->dict;
     case ExpGraph::Node::NodeType::DISJUNCT:
         for (const ExpGraph::Ref& sub : ref->refs) {
-            std::set<std::string> s = ExpandDict(sub);
+            std::set<std::string> s = InlineDict(sub);
             if (s.size() < res.size()) {
                 res.swap(s);
             }
@@ -71,13 +71,13 @@ std::set<std::string> ExpandDict(const ExpGraph::Ref& ref, size_t offset = 0) {
         break;
     case ExpGraph::Node::NodeType::CONCAT:
         if (offset + 1 == ref->refs.size()) {
-            return ExpandDict(ref->refs[offset]);
+            return InlineDict(ref->refs[offset]);
         } else {
-            std::set<std::string> s1 = ExpandDict(ref->refs[offset]);
-            std::set<std::string> s2 = ExpandDict(ref, offset + 1);
+            std::set<std::string> s1 = InlineDict(ref->refs[offset]);
+            std::set<std::string> s2 = InlineDict(ref, offset + 1);
             for (const auto& str1 : s1) {
                 for (const auto& str2 : s2) {
-                    res.emplace(str1 + str2);
+                    res.emplace_hint(res.end(), str1 + str2);
                 }
             }
         }
@@ -115,7 +115,8 @@ bool Optimize(const ExpGraph::Ref& ref) {
         break;
     case ExpGraph::Node::NodeType::DISJUNCT:
         if (ref->count.bits() <= 13) {
-            auto x = ExpandDict(ref);
+            auto x = InlineDict(ref);
+            assert(ref->count.get_ui() == x.size());
             ref->dict = std::move(x);
             ref->nodetype = ExpGraph::Node::NodeType::DICT;
             ref->refs.clear();
@@ -133,6 +134,10 @@ bool Optimize(const ExpGraph::Ref& ref) {
     return false;
 }
 
+}
+
+std::set<std::string> Inline(const ExpGraph::Ref& ref) {
+    return InlineDict(ref);
 }
 
 void Optimize(ExpGraph& graph) {

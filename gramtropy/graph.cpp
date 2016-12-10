@@ -223,6 +223,17 @@ bool Graph::IsDefined(const Graph::Ref& ref) {
     return ref->nodetype != Graph::Node::UNDEF;
 }
 
+Graph::Ref Graph::NewDedup(Graph::Ref&& ref) {
+    Graph::Ref ret;
+    if (ref->nodetype == Graph::Node::DEDUP || ref->nodetype == Graph::Node::DICT) {
+        ret = std::move(ref);
+    } else {
+        ret = NewNode(Graph::Node::DEDUP);
+        ret->refs = {std::move(ref)};
+    }
+    return ret;
+}
+
 Graph::Ref Graph::NewDict(std::set<std::string>&& dict) {
     Graph::Ref ret = NewNode(Graph::Node::DICT);
     ret->dict = std::move(dict);

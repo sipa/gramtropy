@@ -66,7 +66,7 @@ void Expander::ProcessThunk(ThunkRef ref) {
                 ref->done = true;
             } else {
 //                fprintf(stderr, "    disjunct n=%i\n", (int)ref->key.ref->refs.size());
-                ref->nodetype = ExpGraph::Node::NodeType::DISJUNCT;
+                ref->nodetype = Thunk::ThunkType::DISJUNCT;
                 for (size_t i = 0; i < ref->key.ref->refs.size(); i++) {
                     Key key(ref->key.len, ref->key.ref->refs[i]);
                     AddDep(key, ref);
@@ -75,7 +75,7 @@ void Expander::ProcessThunk(ThunkRef ref) {
             }
         case Graph::Node::NodeType::CONCAT:
 //            fprintf(stderr, "    concat n=%i\n", (int)ref->key.ref->refs.size());
-            ref->nodetype = ExpGraph::Node::NodeType::DISJUNCT;
+            ref->nodetype = Thunk::ThunkType::DISJUNCT;
             for (size_t s = 0; s <= ref->key.len; s++) {
                 Key key1(s, ref->key.ref->refs[ref->key.offset]);
                 Key key2;
@@ -94,7 +94,7 @@ void Expander::ProcessThunk(ThunkRef ref) {
                 auto sub = thunks.emplace_back();
                 ref->deps.push_back(sub);
                 sub->forward.insert(ref);
-                sub->nodetype = ExpGraph::Node::NodeType::CONCAT;
+                sub->nodetype = Thunk::ThunkType::CONCAT;
                 if (key1.len <= key2.len) {
                     AddDep(key1, sub);
                     AddDep(key2, sub);
@@ -109,6 +109,13 @@ void Expander::ProcessThunk(ThunkRef ref) {
                 ref->done = true;
             }
             break;
+        case Graph::Node::NodeType::DEDUP: {
+            ref->nodetype = Thunk::ThunkType::DEDUP;
+            assert(ref->key.ref->refs.size() == 1);
+            Key key(ref->key.len, ref->key.ref->refs[0]);
+            AddDep(key, ref);
+            break;
+        }
         default:
             assert(!"Unhandled graph type");
         }
@@ -117,7 +124,7 @@ void Expander::ProcessThunk(ThunkRef ref) {
     if (!ref->done) {
 //        fprintf(stderr, "  finalizing");
         switch (ref->nodetype) {
-        case ExpGraph::Node::NodeType::DISJUNCT: {
+        case Thunk::ThunkType::DISJUNCT: {
             std::vector<ExpGraph::Ref> refs;
             BigNum count;
             bool waiting = false;
@@ -142,7 +149,7 @@ void Expander::ProcessThunk(ThunkRef ref) {
             }
             break;
         }
-        case ExpGraph::Node::NodeType::CONCAT: {
+        case Thunk::ThunkType::CONCAT: {
             std::vector<ExpGraph::Ref> refs;
             BigNum count = 1;
             bool waiting = false;
@@ -172,6 +179,24 @@ void Expander::ProcessThunk(ThunkRef ref) {
 //                fprintf(stderr, "    concatenation: done %i/%i\n", (int)refs.size(), (int)ref->deps.size());
                 ref->result = expgraph->NewConcat(std::move(refs));
             }
+            break;
+        }
+        case Thunk::ThunkType::DEDUP: {
+            assert(ref->deps.size() == 1);
+            if (!ref->deps[0]->done) {
+                break;
+            }
+            ref->done = true;
+            if (!ref->deps[0]->result) {
+                break;
+            }
+            auto inl = Inline(ref->deps[0]->result);
+            auto sub = expgraph->NewDict(std::move(inl));
+            if (sub->count == ref->deps[0]->result->count) {
+                // Optimization: replace argument with expanded dictionary if there are no duplicates.
+                ref->deps[0]->result = sub;
+            }
+            ref->result = std::move(sub);
             break;
         }
         default:

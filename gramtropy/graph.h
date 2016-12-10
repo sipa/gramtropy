@@ -20,7 +20,8 @@ class GraphNode {
         EMPTY, // {""}
         DICT, // {a...}
         CONCAT,
-        DISJUNCT
+        DISJUNCT,
+        DEDUP,
     };
 
     GraphNode(NodeType typ) : nodetype(typ) {}
@@ -43,6 +44,7 @@ public:
     Ref NewDict(std::set<std::string>&& dict);
     Ref NewConcat(std::vector<Ref>&& refs);
     Ref NewDisjunct(std::vector<Ref>&& refs);
+    Ref NewDedup(Ref&& ref);
 
     template<typename S>
     Ref NewString(S&& str) {

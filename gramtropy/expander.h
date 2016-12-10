@@ -39,12 +39,20 @@ class Expander {
     typedef rclist<Thunk>::fixed_iterator ThunkRef;
 
     struct Thunk {
+
+        enum ThunkType {
+            DICT,
+            CONCAT,
+            DISJUNCT,
+            DEDUP,
+        };
+
         bool need_expansion;
         bool done;
         bool todo;
 
         Expander::Key key;
-        ExpGraph::Node::NodeType nodetype;
+        ThunkType nodetype;
         ExpGraph::Ref result;
         std::vector<ThunkRef> deps;
         std::set<ThunkRef> forward;
