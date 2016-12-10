@@ -108,7 +108,9 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             double success = 0;
             double fail = 0;
             writenum(4 * node.refs.size() - 5, stdout);
-            std::sort(subs.begin(), subs.end());
+            if (ref->len != -1) { // Don't reorder multilength disjunctions (no need, as they're fast regardless).
+                std::sort(subs.begin(), subs.end());
+            }
             for (const auto& sub : subs) {
                 auto it2 = dump.find(sub.second);
                 const NodeData& subdata = it2->second;

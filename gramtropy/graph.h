@@ -77,6 +77,5 @@ public:
 
 void Optimize(Graph& graph);
 void OptimizeRef(Graph& graph, Graph::Ref& ref);
-std::string Describe(Graph& graph, const Graph::Ref& ref);
 
 #endif

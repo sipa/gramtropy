@@ -178,6 +178,7 @@ private:
     Lexer* lexer;
     Graph* graph;
     std::map<std::string, Graph::Ref> symbols;
+    std::string error;
 
 public:
     Parser(Lexer* lex, Graph* gra) : lexer(lex), graph(gra) {
@@ -206,7 +207,8 @@ public:
                     lexer->Skip();
                     nodes.emplace_back(EXPR, std::move(res));
                 } else {
-                    assert(!"Unbalanced braces");
+                    error = "Unbalanced braces";
+                    return Graph::Ref();
                 }
                 break;
             }
@@ -279,31 +281,31 @@ public:
 
     bool ParseStatement() {
         if (lexer->PeekType() != Lexer::Token::SYMBOL) {
-            fprintf(stderr, "fail 1\n");
+            error = "symbol expected";
             return false;
         }
 
         Lexer::Token sym = lexer->Get();
         Graph::Ref symbol = ParseSymbol(std::move(sym.text));
         if (graph->IsDefined(symbol)) {
-            fprintf(stderr, "fail 2\n");
+            error = "duplicate definition for symbol '" + sym.text + "'";
             return false;
         }
 
         if (lexer->PeekType() != Lexer::Token::EQUALS) {
-            fprintf(stderr, "fail 3\n");
+            error = "equals sign expected";
             return false;
         }
         lexer->Skip();
 
         Graph::Ref expr = ParseExpression();
-//        if (!graph->IsDefined(expr)) {
-//            fprintf(stderr, "fail 4\n");
-//            return false;
-//        }
+        if (!expr.defined()) {
+            // Error already set by ParseExpression
+            return false;
+        }
 
         if (lexer->PeekType() != Lexer::Token::SEMICOLON) {
-            fprintf(stderr, "fail 5\n");
+            error = "semicolon expected";
             return false;
         }
 
@@ -313,44 +315,40 @@ public:
         return true;
     }
 
-    std::pair<bool, Graph::Ref> ParseProgram() {
+    std::pair<Graph::Ref, std::string> ParseProgram() {
         while (lexer->PeekType() != Lexer::Token::END) {
             if (!ParseStatement()) {
-                return std::make_pair(false, graph->NewUndefined());
+                return std::make_pair(Graph::Ref(), error);
             }
         }
-        return std::make_pair(true, ParseSymbol("main"));
+        return std::make_pair(ParseSymbol("main"), "");
     }
 };
 
 }
 
-bool Parse(Graph& graph, Graph::Ref& main, const char* str, size_t len) {
+std::string Parse(Graph& graph, Graph::Ref& mainout, const char* str, size_t len) {
+    Graph::Ref main;
     Lexer lex(str, len);
 
     {
         Parser parser(&lex, &graph);
         auto ret = parser.ParseProgram();
-        if (!ret.first) {
-            fprintf(stderr, "Parse error: line %i, column %i\n", lex.GetLine(), lex.GetCol());
-            return false;
+        if (!ret.first.defined()) {
+            return ret.second + " on line " + std::to_string(lex.GetLine()) + ", column " + std::to_string(lex.GetCol());
         }
-        main = std::move(ret.second);
-        // std::string desc = Describe(graph, main);
-        // printf("Before optimize:\n");
-        // printf("%s\n\n", desc.c_str());
+        main = std::move(ret.first);
     }
 
     if (!graph.IsDefined(main)) {
-        fprintf(stderr, "Error: main is not defined\n");
-        return false;
+        return "main is not defined";
     }
     if (!graph.FullyDefined()) {
-        fprintf(stderr, "Error: undefined symbols remain\n");
-        return false;
+        return "undefined symbols";
     }
 
     Optimize(graph);
     OptimizeRef(graph, main);
-    return true;
+    mainout = std::move(main);
+    return "";
 }

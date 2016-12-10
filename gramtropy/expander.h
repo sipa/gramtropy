@@ -64,7 +64,7 @@ class Expander {
 public:
     Expander(const Graph* graph_, ExpGraph* expgraph_) : graph(graph_), expgraph(expgraph_) {}
 
-    ExpGraph::Ref Expand(const Graph::Ref& ref, size_t len);
+    std::pair<bool, ExpGraph::Ref> Expand(const Graph::Ref& ref, size_t len);
 };
 
 #endif

@@ -62,16 +62,18 @@ void Expander::ProcessThunk(ThunkRef ref) {
             break;
         }
         case Graph::Node::NodeType::DISJUNCT:
-            assert(ref->key.ref->refs.size() >= 2);
-//            fprintf(stderr, "    disjunct n=%i\n", (int)ref->key.ref->refs.size());
-            ref->nodetype = ExpGraph::Node::NodeType::DISJUNCT;
-            for (size_t i = 0; i < ref->key.ref->refs.size(); i++) {
-                Key key(ref->key.len, ref->key.ref->refs[i]);
-                AddDep(key, ref);
+            if (ref->key.ref->refs.size() == 0) {
+                ref->done = true;
+            } else {
+//                fprintf(stderr, "    disjunct n=%i\n", (int)ref->key.ref->refs.size());
+                ref->nodetype = ExpGraph::Node::NodeType::DISJUNCT;
+                for (size_t i = 0; i < ref->key.ref->refs.size(); i++) {
+                    Key key(ref->key.len, ref->key.ref->refs[i]);
+                    AddDep(key, ref);
+                }
+                break;
             }
-            break;
         case Graph::Node::NodeType::CONCAT:
-            assert(ref->key.ref->refs.size() >= 2 + ref->key.offset);
 //            fprintf(stderr, "    concat n=%i\n", (int)ref->key.ref->refs.size());
             ref->nodetype = ExpGraph::Node::NodeType::DISJUNCT;
             for (size_t s = 0; s <= ref->key.len; s++) {
@@ -201,7 +203,7 @@ void Expander::AddTodo(const ThunkRef& ref, bool priority) {
     }
 }
 
-ExpGraph::Ref Expander::Expand(const Graph::Ref& ref, size_t len) {
+std::pair<bool, ExpGraph::Ref> Expander::Expand(const Graph::Ref& ref, size_t len) {
     Key key(len, ref);
 
     ThunkRef dummy;
@@ -209,7 +211,7 @@ ExpGraph::Ref Expander::Expand(const Graph::Ref& ref, size_t len) {
 
     while (!thunkmap[key]->done) {
         if (todo.empty()) {
-            assert(!"Nothing to process left");
+            return std::make_pair(false, ExpGraph::Ref());
         }
         ThunkRef now = std::move(todo.front());
         todo.pop_front();
@@ -218,7 +220,7 @@ ExpGraph::Ref Expander::Expand(const Graph::Ref& ref, size_t len) {
         ProcessThunk(std::move(now));
     }
 
-    fprintf(stderr, "%i thunks left todo\n", (int)todo.size());
+//    fprintf(stderr, "%i thunks left todo\n", (int)todo.size());
 
-    return thunkmap[key]->result;
+    return std::make_pair(true, thunkmap[key]->result);
 }

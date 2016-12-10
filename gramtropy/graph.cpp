@@ -1,80 +1,8 @@
 #include "graph.h"
 
-#include "tinyformat.h"
 #include <map>
 
 namespace {
-    static std::string DescribeNode(Graph* graph, const Graph::Ref& node, std::map<const Graph::Node*, uint32_t>& m, std::vector<std::string>& rret) {
-        if (m.count(&*node)) return tfm::format("n%u", m[&*node]);
-        std::string inl;
-        uint32_t pos = m.size();
-        m[&*node] = pos;
-        switch (node->nodetype) {
-        case Graph::Node::UNDEF:
-            inl = "???";
-            break;
-        case Graph::Node::NONE:
-            inl = "none";
-            break;
-        case Graph::Node::EMPTY:
-            inl = "\"\"";
-            break;
-        case Graph::Node::DICT: {
-            inl = "(";
-            bool first = true;
-            for (const std::string& str : node->dict) {
-                if (!first) inl += " | ";
-                inl += "\"" + str + "\"";
-                first = false;
-            }
-            inl += ")";
-            break;
-        }
-        case Graph::Node::DISJUNCT: {
-            inl = "(";
-            bool first = true;
-            for (const Graph::Ref& ref : node->refs) {
-                if (!first) inl += " | ";
-                inl += DescribeNode(graph, ref, m, rret);
-                first = false;
-            }
-            inl += ")";
-            break;
-        }
-        case Graph::Node::CONCAT: {
-            inl = "(";
-            bool first = true;
-            for (const Graph::Ref& ref : node->refs) {
-                if (!first) inl += " ";
-                inl += DescribeNode(graph, ref, m, rret);
-                first = false;
-            }
-            inl += ")";
-            break;
-        }
-        default:
-            assert(false);
-            return "";
-        }
-        if (node.unique() && inl.size() <= 80) {
-            return inl;
-        }
-        rret.push_back(tfm::format("n%u = %s;\n", pos, inl));
-        return tfm::format("n%u", pos);
-    }
-
-    static std::string Describe(Graph* graph, const Graph::Ref& node) {
-        std::map<const Graph::Node*, uint32_t> m;
-        std::vector<std::string> res;
-        std::string r = DescribeNode(graph, node, m, res);
-        std::string ret;
-        for (const std::string& r : res) {
-            ret += r;
-        }
-        ret += "main = " + r + ";\n";
-        return ret;
-    }
-
     static bool OptimizeRefInternal(Graph* graph, Graph::Ref& node) {
         if ((node->nodetype == Graph::Node::DISJUNCT || node->nodetype == Graph::Node::CONCAT) && node->refs.size() == 1) {
             node = node->refs[0];
@@ -293,10 +221,6 @@ bool Graph::FullyDefined() {
 
 bool Graph::IsDefined(const Graph::Ref& ref) {
     return ref->nodetype != Graph::Node::UNDEF;
-}
-
-std::string Describe(Graph& graph, const Graph::Ref& ref) {
-    return Describe(&graph, ref);
 }
 
 Graph::Ref Graph::NewDict(std::set<std::string>&& dict) {
