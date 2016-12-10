@@ -38,6 +38,12 @@ f1 * (c2 + c3 + c4) + f2 * (c3 + c4) + f3 * (c4)
 
 void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
     int cnt = 0;
+    BigNum big = 1;
+    double small = 1.0;
+    for (int i = 0; i < 3; i++) {
+        big *= 1000000000;
+        small *= 0.000000001;
+    }
     std::map<const ExpGraph::Node*, NodeData> dump;
     for (const auto& node : expgraph.nodes) {
         auto it = dump.emplace(&node, cnt);
@@ -45,7 +51,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
 //        fprintf(stderr, "Export node %i (%s combinations)\n", cnt, node.count.hex().str_c());
         if (node.nodetype == ExpGraph::Node::NodeType::DICT) {
             double cost = log2(node.dict.size());
-            fprintf(stderr, "* Dict size %u\n", (unsigned)node.dict.size());
+//            fprintf(stderr, "* Dict size %u\n", (unsigned)node.dict.size());
             writenum(4 * node.dict.size() - 3, stdout);
             writenum(node.len, stdout);
             const std::string* prev = nullptr;
@@ -63,7 +69,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             data.success = cost + 1.0;
             data.fail = cost + 2.0;
         } else if (node.nodetype == ExpGraph::Node::NodeType::CONCAT) {
-            fprintf(stderr, "* Cat of %i\n", (int)node.refs.size());
+//            fprintf(stderr, "* Cat of %i\n", (int)node.refs.size());
             size_t pos = 0;
             std::vector<std::tuple<double, const ExpGraph::Node*, int>> subs;
             for (size_t s = 0; s < node.refs.size(); s++) {
@@ -86,13 +92,13 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
                 fact *= 0.1;
                 writenum(std::get<2>(sub), stdout);
                 writenum(cnt - subdata.number - 1, stdout);
-                fprintf(stderr, "  * node %i at pos %i\n", subdata.number, std::get<2>(sub));
+//                fprintf(stderr, "  * node %i at pos %i\n", subdata.number, std::get<2>(sub));
             }
             data.success = 1.0 + success;
             data.fail = 1.0 + fail;
-            fprintf(stderr, "  * Total: %s combinations\n", node.count.hex().c_str());
+//            fprintf(stderr, "  * Total: %s combinations\n", node.count.hex().c_str());
         } else {
-            fprintf(stderr, "* Disjunct of %i\n", (int)node.refs.size());
+//            fprintf(stderr, "* Disjunct of %i\n", (int)node.refs.size());
             std::vector<std::pair<double, const ExpGraph::Node*>> subs;
             for (size_t s = 0; s < node.refs.size(); s++) {
                 auto it2 = dump.find(&*node.refs[s]);
@@ -106,16 +112,18 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             for (const auto& sub : subs) {
                 auto it2 = dump.find(sub.second);
                 const NodeData& subdata = it2->second;
-                success += (fail + subdata.success) * (sub.second->count.get_d() / node.count.get_d());
+                BigNum x = sub.second->count * big;
+                BigNum ratio = x.divmod(node.count);
+                success += (fail + subdata.success) * (ratio.get_d() * small);
                 fail += subdata.fail;
                 writenum(cnt - subdata.number - 1, stdout);
-                fprintf(stderr, "  * node %i (%g suc, %g fail)\n", subdata.number, subdata.success, subdata.fail);
+//                fprintf(stderr, "  * node %i (%g suc, %g fail)\n", subdata.number, subdata.success, subdata.fail);
             }
             data.success = 1.0 + success;
             data.fail = 1.0 + fail;
-            fprintf(stderr, "  * Total: %s combinations\n", node.count.hex().c_str());
+//            fprintf(stderr, "  * Total: %s combinations\n", node.count.hex().c_str());
         }
-        fprintf(stderr, "* cost (%g suc, %g fail)\n", data.success, data.fail);
+//        fprintf(stderr, "* cost (%g suc, %g fail)\n", data.success, data.fail);
         if (ref && &*ref == &node) {
             break;
         }

@@ -40,18 +40,17 @@ void Import(FlatGraph& graph, FILE* file) {
                     memcpy(&data[i * len], &data[(i - 1) * len], offset);
                 }
                 fread(&data[i * len + offset], len - offset, 1, file);
-//                fprintf(stderr, "Imported dict word: '%.*s'\n", len, &data[i * len]);
             }
             std::vector<FlatNode>::iterator node = graph.nodes.emplace(graph.nodes.end(), FlatNode::NodeType::DICT, len);
             node->dict = graph.dicts.size();
             graph.dicts.emplace_back(std::move(data), len);
             node->count = count;
-            fprintf(stderr, "* Dict of %lu words of size %lu\n", (unsigned long)count, (unsigned long)len);
+//            fprintf(stderr, "* Dict of %lu words of size %lu\n", (unsigned long)count, (unsigned long)len);
             break;
         }
         case 2: {
             size_t num = 2 + (typ >> 2);
-            fprintf(stderr, "* Concat of %lu entries\n", (unsigned long)num);
+//            fprintf(stderr, "* Concat of %lu entries\n", (unsigned long)num);
             BigNum count = 1;
             int len = 0;
             std::vector<std::pair<size_t, size_t>> refs;
@@ -63,19 +62,19 @@ void Import(FlatGraph& graph, FILE* file) {
                 refs.emplace_back(pos, idx);
                 count *= graph.nodes[idx].count;
                 len += graph.nodes[idx].len;
-                fprintf(stderr, "  * Entry %lu of len %lu at post %lu\n", (unsigned long)idx, (unsigned long)graph.nodes[idx].len, (unsigned long)pos);
+//                fprintf(stderr, "  * Entry %lu of len %lu at post %lu\n", (unsigned long)idx, (unsigned long)graph.nodes[idx].len, (unsigned long)pos);
             }
             std::vector<FlatNode>::iterator node = graph.nodes.emplace(graph.nodes.end(), FlatNode::NodeType::CONCAT, len);
             node->refs = std::move(refs);
             node->count = std::move(count);
-            fprintf(stderr, "  * Total: %s combinations\n", node->count.hex().c_str());
+//            fprintf(stderr, "  * Total: %s combinations\n", node->count.hex().c_str());
             break;
         }
         case 3: {
             size_t num = 2 + (typ >> 2);
             BigNum count = 0;
             int len;
-            fprintf(stderr, "* Disjunct of %lu entries\n", (unsigned long)num);
+//            fprintf(stderr, "* Disjunct of %lu entries\n", (unsigned long)num);
             std::vector<std::pair<size_t, size_t>> refs;
             refs.reserve(num);
             for (size_t i = 0; i < num; i++) {
@@ -88,12 +87,12 @@ void Import(FlatGraph& graph, FILE* file) {
                 } else if (len != graph.nodes[idx].len) {
                     len = -1;
                 }
-                fprintf(stderr, "  * Entry %lu of len %lu\n", (unsigned long)idx, (unsigned long)graph.nodes[idx].len);
+//                fprintf(stderr, "  * Entry %lu of len %lu\n", (unsigned long)idx, (unsigned long)graph.nodes[idx].len);
             }
             std::vector<FlatNode>::iterator node = graph.nodes.emplace(graph.nodes.end(), FlatNode::NodeType::DISJUNCT, len);
             node->refs = std::move(refs);
             node->count = std::move(count);
-            fprintf(stderr, "  * Total: %s combinations\n", node->count.hex().c_str());
+//            fprintf(stderr, "  * Total: %s combinations\n", node->count.hex().c_str());
             break;
         }
         }
