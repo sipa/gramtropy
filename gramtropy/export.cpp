@@ -13,10 +13,18 @@ struct NodeData {
 };
 
 void writenum(uint64_t n, FILE* f) {
-    do {
-        putc((n & 0x7F) | ((n > 0x7F) << 7), f);
-        n >>= 7;
-    } while (n);
+//    fprintf(stderr, "Write num %lx\n", (unsigned long)n);
+    int exts = 0;
+    uint64_t nc = n;
+    while (nc) {
+        ++exts;
+        nc >>= 7;
+    }
+    while (exts) {
+        putc(0x80 | ((n >> (7 * exts)) & 0x7F), f);
+        --exts;
+    }
+    putc(n & 0x7F, f);
 }
 
 }
@@ -34,11 +42,11 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
     for (const auto& node : expgraph.nodes) {
         auto it = dump.emplace(&node, cnt);
         NodeData& data = it.first->second;
-//        fprintf(stderr, "Export node %i\n", cnt);
+//        fprintf(stderr, "Export node %i (%s combinations)\n", cnt, node.count.hex().str_c());
         if (node.nodetype == ExpGraph::Node::NodeType::DICT) {
             double cost = log2(node.dict.size());
-//            fprintf(stderr, "* Dict size %u\n", (unsigned)node.dict.size());
-            writenum(4 * node.dict.size(), stdout);
+            fprintf(stderr, "* Dict size %u\n", (unsigned)node.dict.size());
+            writenum(4 * node.dict.size() - 3, stdout);
             writenum(node.len, stdout);
             const std::string* prev = nullptr;
             for (const auto& str : node.dict) {
@@ -55,7 +63,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             data.success = cost + 1.0;
             data.fail = cost + 2.0;
         } else if (node.nodetype == ExpGraph::Node::NodeType::CONCAT) {
-//            fprintf(stderr, "* Cat of %i\n", (int)node.refs.size());
+            fprintf(stderr, "* Cat of %i\n", (int)node.refs.size());
             size_t pos = 0;
             std::vector<std::tuple<double, const ExpGraph::Node*, int>> subs;
             for (size_t s = 0; s < node.refs.size(); s++) {
@@ -68,7 +76,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             double success = 0;
             double fail = 0;
             double fact = 1.0;
-            writenum(4 * node.refs.size() - 7, stdout);
+            writenum(4 * node.refs.size() - 6, stdout);
             std::sort(subs.begin(), subs.end());
             for (const auto& sub : subs) {
                 auto it2 = dump.find(std::get<1>(sub));
@@ -78,12 +86,13 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
                 fact *= 0.1;
                 writenum(std::get<2>(sub), stdout);
                 writenum(cnt - subdata.number - 1, stdout);
-//                fprintf(stderr, "  * node %i at pos %i (%g suc, %g fail)\n", subdata.number, std::get<2>(sub), subdata.success, subdata.fail);
+                fprintf(stderr, "  * node %i at pos %i\n", subdata.number, std::get<2>(sub));
             }
             data.success = 1.0 + success;
             data.fail = 1.0 + fail;
+            fprintf(stderr, "  * Total: %s combinations\n", node.count.hex().c_str());
         } else {
-//            fprintf(stderr, "* Disjunct of %i\n", (int)node.refs.size());
+            fprintf(stderr, "* Disjunct of %i\n", (int)node.refs.size());
             std::vector<std::pair<double, const ExpGraph::Node*>> subs;
             for (size_t s = 0; s < node.refs.size(); s++) {
                 auto it2 = dump.find(&*node.refs[s]);
@@ -92,7 +101,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             }
             double success = 0;
             double fail = 0;
-            writenum(4 * node.refs.size() - 6, stdout);
+            writenum(4 * node.refs.size() - 5, stdout);
             std::sort(subs.begin(), subs.end());
             for (const auto& sub : subs) {
                 auto it2 = dump.find(sub.second);
@@ -100,17 +109,18 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
                 success += (fail + subdata.success) * (sub.second->count.get_d() / node.count.get_d());
                 fail += subdata.fail;
                 writenum(cnt - subdata.number - 1, stdout);
-//                fprintf(stderr, "  * node %i (%g suc, %g fail)\n", subdata.number, subdata.success, subdata.fail);
+                fprintf(stderr, "  * node %i (%g suc, %g fail)\n", subdata.number, subdata.success, subdata.fail);
             }
             data.success = 1.0 + success;
             data.fail = 1.0 + fail;
+            fprintf(stderr, "  * Total: %s combinations\n", node.count.hex().c_str());
         }
-//        fprintf(stderr, "* cost (%g suc, %g fail)\n", data.success, data.fail);
+        fprintf(stderr, "* cost (%g suc, %g fail)\n", data.success, data.fail);
         if (ref && &*ref == &node) {
             break;
         }
         cnt++;
     }
-    
+    writenum(0, stdout);
 }
 

@@ -31,10 +31,10 @@ size_t Generate(std::vector<char>& out, size_t pos, const FlatGraph& graph, cons
         for (const auto& sub : ref->refs) {
             const FlatNode* subnode = &graph.nodes[sub.second];
             BigNum div = num.divmod(subnode->count);
-            pos = Generate(out, pos + sub.first, graph, subnode, std::move(num));
+            Generate(out, pos + sub.first, graph, subnode, std::move(num));
             num = std::move(div);
         }
-        return pos;
+        return pos + ref->len;
     }
     assert(false);
 }
@@ -74,6 +74,7 @@ bool Parse(const FlatGraph& graph, const FlatNode* ref, const char* chr, int len
             return false;
         }
         out = ret;
+        assert(out < ref->count);
         return true;
     }
     case FlatNode::NodeType::DISJUNCT: {
@@ -83,6 +84,7 @@ bool Parse(const FlatGraph& graph, const FlatNode* ref, const char* chr, int len
             const FlatNode* subnode = &graph.nodes[sub.second];
             if (Parse(graph, subnode, chr, len, ret)) {
                 out += ret;
+                assert(out < ref->count);
                 return true;
             }
             out += subnode->count;
@@ -103,6 +105,7 @@ bool Parse(const FlatGraph& graph, const FlatNode* ref, const char* chr, int len
             out += mult * ret;
             mult *= subnode->count;
         }
+        assert(out < ref->count);
         return true;
     }
     }
@@ -123,9 +126,9 @@ std::string Generate(const FlatGraph& graph, const FlatNode* ref, BigNum&& num) 
 
 std::string Generate(const FlatGraph& graph, const FlatNode* ref) {
     BigNum num = RandomInteger(ref->count);
-//    fprintf(stderr, "RNG: %s\n", num.hex().c_str());
+    fprintf(stderr, "RNG: %s\n", num.hex().c_str());
     std::string str = Generate(graph, ref, BigNum(num));
-//    fprintf(stderr, "GEN: %s\n", str.c_str());
+    fprintf(stderr, "GEN: %s\n", str.c_str());
     BigNum nnum;
     bool ret = Parse(graph, ref, str, nnum);
     assert(ret);
