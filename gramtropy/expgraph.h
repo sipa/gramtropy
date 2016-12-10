@@ -40,9 +40,4 @@ public:
 
 void Optimize(ExpGraph& graph);
 
-std::string Generate(const ExpGraph::Ref& ref, BigNum&& num);
-std::string Generate(const ExpGraph::Ref& ref);
-
-bool Parse(const ExpGraph::Ref& ref, const std::string& str);
-
 #endif

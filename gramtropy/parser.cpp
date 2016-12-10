@@ -325,33 +325,15 @@ public:
 
 }
 
-#ifdef MAIN
-#include <stdio.h>
-#include "expgraph.h"
-#include "expander.h"
-
-
-int main(int argc, char** argv) {
-    char *buf = (char*)malloc(1048576);
-    ssize_t len = fread(buf, 1, 1048576, stdin);
-    int reslen = argc > 1 ? strtoul(argv[1], NULL, 10) : 16;
-
-    if (len < 0) {
-        fprintf(stderr, "Failed to read\n");
-        return -1;
-    }
-
-    Lexer lex(buf, len);
-
-    Graph graph;
-    Graph::Ref main;
+bool Parse(Graph& graph, Graph::Ref& main, const char* str, size_t len) {
+    Lexer lex(str, len);
 
     {
         Parser parser(&lex, &graph);
         auto ret = parser.ParseProgram();
         if (!ret.first) {
             fprintf(stderr, "Parse error: line %i, column %i\n", lex.GetLine(), lex.GetCol());
-            return -1;
+            return false;
         }
         main = std::move(ret.second);
         // std::string desc = Describe(graph, main);
@@ -359,49 +341,16 @@ int main(int argc, char** argv) {
         // printf("%s\n\n", desc.c_str());
     }
 
-    free(buf);
-
     if (!graph.IsDefined(main)) {
         fprintf(stderr, "Error: main is not defined\n");
-        return -4;
+        return false;
     }
     if (!graph.FullyDefined()) {
         fprintf(stderr, "Error: undefined symbols remain\n");
-        return -3;
+        return false;
     }
 
     Optimize(graph);
     OptimizeRef(graph, main);
-    // std::string desc = Describe(graph, main);
-    // printf("After optimize:\n");
-    // printf("%s\n", desc.c_str());
-
-
-    ExpGraph::Ref emain;
-    ExpGraph expgraph;
-    {
-        Expander exp(&graph, &expgraph);
-        emain = exp.Expand(main, reslen);
-        if (!emain.defined()) {
-            fprintf(stderr, "Error: infinite recursion\n");
-            return -4;
-        }
-    }
-
-    Optimize(expgraph);
-
-    fprintf(stderr, "%lu node model, %s combinations (%g bits)\n", (unsigned long)expgraph.nodes.size(), emain->count.hex().c_str(), emain->count.log2());
-
-/*    for (int i = 0; i < 100; i++) {
-        std::string str = Generate(emain);
-        fprintf(stderr, "Res: %s\n", str.c_str());
-    }*/
-
-    Export(expgraph, emain, stdout);
-
-    emain = ExpGraph::Ref();
-    main = Graph::Ref();
-    return 0;
+    return true;
 }
-
-#endif

@@ -3,6 +3,6 @@
 
 #include "graph.h"
 
-bool Parse(Graph& graph, const std::string& str);
+bool Parse(Graph& graph, Graph::Ref& main, const char* str, size_t len);
 
 #endif

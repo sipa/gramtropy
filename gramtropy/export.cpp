@@ -68,7 +68,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             double success = 0;
             double fail = 0;
             double fact = 1.0;
-            writenum(4 * node.refs.size() + 1, stdout);
+            writenum(4 * node.refs.size() - 7, stdout);
             std::sort(subs.begin(), subs.end());
             for (const auto& sub : subs) {
                 auto it2 = dump.find(std::get<1>(sub));
@@ -92,7 +92,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             }
             double success = 0;
             double fail = 0;
-            writenum(4 * node.refs.size() + 2, stdout);
+            writenum(4 * node.refs.size() - 6, stdout);
             std::sort(subs.begin(), subs.end());
             for (const auto& sub : subs) {
                 auto it2 = dump.find(sub.second);
