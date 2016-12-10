@@ -62,14 +62,14 @@ public:
         if (it == itend) {
             return Token(Token::END);
         }
-        if ((*it >= 'a' && *it <= 'z') || (*it >= 'A' && *it <= 'Z')) {
+        if ((*it >= 'a' && *it <= 'z') || (*it >= 'A' && *it <= 'Z') || *it == '_') {
             auto bit = it;
             ++it;
             do {
                 if (it == itend) {
                     break;
                 }
-                if ((*it >= 'a' && *it <= 'z') || (*it >= 'A' && *it <= 'Z') || (*it >= '0' && *it <= '9')) {
+                if ((*it >= 'a' && *it <= 'z') || (*it >= 'A' && *it <= 'Z') || *it == '_' || (*it >= '0' && *it <= '9')) {
                     ++it;
                     continue;
                 }

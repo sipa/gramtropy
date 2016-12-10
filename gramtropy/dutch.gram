@@ -1,26 +1,29 @@
-symbol onset nucleus coda codaonset inner word s words
+onset = "b" ("" | "l" | "r") |
+        "c" ("h" | "hr" | "hl") |
+        "d" ("" | "j" | "r" | "w") |
+        "f" ("" | "l" | "n" | "r") |
+        "g" ("" | "l" | "n" | "r") |
+        "h" |
+        "j" |
+        "k" ("" | "l" | "n" | "r" | "w")
+        "l" |
+        "m" |
+        "n" |
+        "p" ("" | "l" | "n" | "r" | "s") |
+        "r" |
+        "s" ("" | "ch" ("" | "l" | "m" | "r") | "j" | "k" | "m" | "n" | "p" ("" | "l" | "r") | "t" | "tr" | "w") |
+        "t" ("" | "j" | "r" | "s" | "sj" | "w") |
+        "v" ("" | "l" | "r")
+        "w" ("" | "r")
+        "z" ("" | "z");
 
-dict s " "
-dict onset "b" "bl" "br" "ch" "chr" "chl" "d" "dj" "dr" "dw" "f" "fl" "fn" "fr" "g" "gl" "gn" "gr" "h" "j" "k" "kl" "kn" "kr" "kw" "l" "m" "n" "p" "pl" "pr" "ps" "r" "s" "sch" "schl" "schm" "schr" "sj" "sk" "sm" "sn" "sp" "spl" "spr" "st" "str" "sw" "t" "tj" "tr" "ts" "tsj" "tw" "v" "vl" "vr" "w" "wr" "z" "zw"
-dict nucleus "a" "aa" "au" "e" "ee" "ei" "eu" "i" "ie" "ij" "o" "oo" "oe" "ou" "u" "ui" "uu"
-dict coda "b" "bs" "bt" "ch" "cht" "d" "ds" "f" "fd" "fs" "fst" "ft" "g" "gd" "gs" "gst" "gt" "k" "ks" "kt" "l" "ld" "lds" "lf" "lft" "lg" "lk" "lkt"
+nucleus = "a" | "aa" | "au" | "e" | "ee" | "ei" | "eu" | "i" | "ie" | "ij" | "o" | "oo" | "oe" | "ou" | "u" | "ui" | "uu";
 
-expand codaonset coda onset
-expand codaonset coda
-expand codaonset onset
-deduplicate codaonset
+coda = "b" | "bs" | "bt" | "ch" | "cht" | "d" | "ds" | "f" | "fd" | "fs" | "fst" | "ft" |
+       "g" | "gd" | "gs" | "gst" | "gt" | "k" | "ks" | "kt" | "l" | "ld" | "lds" | "lf" | "lft" | "lg" | "lk" | "lkt";
 
-expand inner nucleus codaonset nucleus codaonset nucleus
-expand inner nucleus codaonset nucleus
-#print inner nucleus
+codaonset = dedup(coda onset | coda | onset);
 
-expand word inner
-expand word onset inner
-expand word inner coda
-expand word onset inner coda
+word = onset? nucleus (codaonset nucleus)* coda?;
 
-expand words word
-expand words word s words
-
-terminal words
-
+main = word (" " word)*;

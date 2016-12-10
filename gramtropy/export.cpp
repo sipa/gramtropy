@@ -16,7 +16,7 @@ void writenum(uint64_t n, FILE* f) {
 //    fprintf(stderr, "Write num %lx\n", (unsigned long)n);
     int exts = 0;
     uint64_t nc = n;
-    while (nc) {
+    while (nc >> 7) {
         ++exts;
         nc >>= 7;
     }

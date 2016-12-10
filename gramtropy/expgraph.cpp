@@ -67,7 +67,6 @@ std::set<std::string> InlineDict(const ExpGraph::Ref& ref, size_t offset = 0) {
             }
             res.insert(s.begin(), s.end());
         }
-        assert(res.size() == ref->count.get_ui());
         break;
     case ExpGraph::Node::NodeType::CONCAT:
         if (offset + 1 == ref->refs.size()) {
@@ -80,9 +79,6 @@ std::set<std::string> InlineDict(const ExpGraph::Ref& ref, size_t offset = 0) {
                     res.emplace_hint(res.end(), str1 + str2);
                 }
             }
-        }
-        if (offset == 0) {
-            assert(res.size() == ref->count.get_ui());
         }
         break;
     }
