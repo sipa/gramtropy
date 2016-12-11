@@ -35,7 +35,12 @@ namespace {
                 if (dict.size() < ref->dict.size()) {
                     dict.swap(ref->dict);
                 }
-                dict.insert(ref->dict.begin(), ref->dict.end());
+                for (const auto& str : ref->dict) {
+                    if (dict.count(str)) {
+                        fprintf(stderr, "Duplicate: %s\n", str.c_str());
+                    }
+                    dict.insert(str);
+                }
             } else if (ref->nodetype == Graph::Node::CONCAT && ref->refs.size() == 1) {
                 refs.emplace_back(ref->refs[0]);
             } else {

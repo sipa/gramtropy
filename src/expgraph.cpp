@@ -54,29 +54,29 @@ ExpGraph::Ref ExpGraph::NewDisjunct(std::vector<Ref>&& refs) {
 
 namespace {
 
-std::set<std::string> InlineDict(const ExpGraph::Ref& ref, size_t offset = 0) {
-    std::set<std::string> res;
+std::vector<std::string> InlineDict(const ExpGraph::Ref& ref, size_t offset = 0) {
+    std::vector<std::string> res;
     switch (ref->nodetype) {
     case ExpGraph::Node::NodeType::DICT:
-        return ref->dict;
+        return std::vector<std::string>(ref->dict.begin(), ref->dict.end());
     case ExpGraph::Node::NodeType::DISJUNCT:
         for (const ExpGraph::Ref& sub : ref->refs) {
-            std::set<std::string> s = InlineDict(sub);
+            std::vector<std::string> s = InlineDict(sub);
             if (s.size() < res.size()) {
                 res.swap(s);
             }
-            res.insert(s.begin(), s.end());
+            res.insert(res.end(), s.begin(), s.end());
         }
         break;
     case ExpGraph::Node::NodeType::CONCAT:
         if (offset + 1 == ref->refs.size()) {
             return InlineDict(ref->refs[offset]);
         } else {
-            std::set<std::string> s1 = InlineDict(ref->refs[offset]);
-            std::set<std::string> s2 = InlineDict(ref, offset + 1);
+            std::vector<std::string> s1 = InlineDict(ref->refs[offset]);
+            std::vector<std::string> s2 = InlineDict(ref, offset + 1);
             for (const auto& str1 : s1) {
                 for (const auto& str2 : s2) {
-                    res.emplace_hint(res.end(), str1 + str2);
+                    res.emplace_back(str1 + str2);
                 }
             }
         }
@@ -112,8 +112,16 @@ bool Optimize(const ExpGraph::Ref& ref) {
     case ExpGraph::Node::NodeType::DISJUNCT:
         if (ref->count.bits() <= 13) {
             auto x = InlineDict(ref);
+            std::set<std::string> dict;
             assert(ref->count.get_ui() == x.size());
-            ref->dict = std::move(x);
+            for (auto& str : x) {
+                if (dict.count(str)) {
+                    fprintf(stderr, "Duplicate expansion for %s\n", str.c_str());
+                } else {
+                    dict.emplace(std::move(str));
+                }
+            }
+            ref->dict = std::move(dict);
             ref->nodetype = ExpGraph::Node::NodeType::DICT;
             ref->refs.clear();
             return true;
@@ -133,7 +141,12 @@ bool Optimize(const ExpGraph::Ref& ref) {
 }
 
 std::set<std::string> Inline(const ExpGraph::Ref& ref) {
-    return InlineDict(ref);
+    auto x = InlineDict(ref);
+    std::set<std::string> dict;
+    for (auto& str : x) {
+        dict.emplace(std::move(str));
+    }
+    return dict;
 }
 
 void Optimize(ExpGraph& graph) {

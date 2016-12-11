@@ -177,10 +177,11 @@ private:
 
     Lexer* lexer;
     Graph* graph;
-    std::map<std::string, Graph::Ref> symbols;
     std::string error;
 
 public:
+    std::map<std::string, Graph::Ref> symbols;
+
     Parser(Lexer* lex, Graph* gra) : lexer(lex), graph(gra) {
         symbols["empty"] = gra->NewEmpty();
         symbols["none"] = gra->NewNone();
@@ -348,13 +349,19 @@ std::string Parse(Graph& graph, Graph::Ref& mainout, const char* str, size_t len
             return ret.second + " on line " + std::to_string(lex.GetLine()) + ", column " + std::to_string(lex.GetCol());
         }
         main = std::move(ret.first);
+
+        for (auto const &x : parser.symbols) {
+            if (!graph.IsDefined(x.second)) {
+                return "undefined symbol '" + x.first + "'";
+            }
+        }
     }
 
     if (!graph.IsDefined(main)) {
         return "main is not defined";
     }
     if (!graph.FullyDefined()) {
-        return "undefined symbols";
+        return "undefined symbol";
     }
 
     Optimize(graph);

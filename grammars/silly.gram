@@ -1,197 +1,149 @@
-symbol s and p_ver s_ver s_averb p_averb vadj cadj adj cqualify qualify
-symbol vadjective cadjective adjective vs_count cs_count p_count vs_actor
-symbol cs_actor s_actor p_actor s_verb p_verb when where vs_thing cs_thing
-symbol s_thing p_thing connect s_subject p_subject object sentencepart sentence
-symbol where_prefix where_c_art where_v_art wherephrase vqualify
+s = " ";
 
-dict s " "
+cqualify = "slightly" | "somewhat" | "very" | "excessively" | "massively" | "hardly" | "rather" | "barely";
+vqualify = "almost";
 
-dict cqualify "slightly" "somewhat" "very" "excessively" "massively" "hardly" "rather" "barely"
-dict vqualify "almost"
+vadjective = "angry" | "ill" | "evil" | "insane" | "ugly" | "empty" | "odd" | "apt" | "icy" | "abstract" | "absurd" |
+             "accoustic" | "actual" | "aerobic" | "afraid" | "amazing" | "amused" | "ancient" | "annual" |
+             "another" | "antique" | "arctic" | "armed" | "awake" | "aware" | "awesome" | "awful" | "awkward";
 
-dict vadjective "angry" "ill" "evil" "insane" "ugly" "empty" "odd" "apt" "icy" "abstract" "absurd"
-dict vadjective "accoustic" "actual" "aerobic" "afraid" "amazing" "amused" "ancient" "annual"
-dict vadjective "another" "antique" "arctic" "armed" "awake" "aware" "awesome" "awful" "awkward"
+cadjective = "big" | "small" | "sleepy" | "tall" | "hungry" | "funny" | "great" | "puny" |
+             "good" | "bad" | "tiny" | "huge" | "fearsome" | "crazy" | "boring" | "green" |
+             "red" | "blue" | "yellow" | "nasty" | "pretty" | "hot" | "cold" | "thin" | "sly" |
+             "full" | "fun" | "weird" | "young" | "hip" | "lax" | "mad" | "raw" | "sad" | "shy" |
+             "tin" | "lonely" | "basic" | "beautiful" | "best" | "better" | "bitter" | "black" |
+             "bleak" | "blind" | "blurry" | "brass" | "brave" | "brief" | "bright" |
+             "broken" | "bronze" | "brown" | "busy" | "calm";
 
-dict cadjective "big" "small" "sleepy" "tall" "hungry" "funny" "great" "puny"
-dict cadjective "good" "bad" "tiny" "huge" "fearsome" "crazy" "boring" "green"
-dict cadjective "red" "blue" "yellow" "nasty" "pretty" "hot" "cold" "thin" "sly"
-dict cadjective "full" "fun" "weird" "young" "hip" "lax" "mad" "raw" "sad" "shy"
-dict cadjective "tin" "lonely" "basic" "beautiful" "best" "better" "bitter" "black"
-dict cadjective "bleak" "blind" "blurry" "boring" "brass" "brave" "brief" "bright"
-dict cadjective "broken" "bronze" "brown" "busy" "calm"
+and = "and";
 
-dict and "and"
+vs_count = "the" | "one" | "no" | "a";
 
-dict vs_count "the" "one" "no" "a"
+cs_count = "the" | "one" | "no" | "an";
 
-dict cs_count "the" "one" "no" "an"
+p_count = "two" | "three" | "four" | "five" | "some" | "many" | "all" | "zero" |
+          "a great many" | "most" | "a group of" | "a collection of" |
+          "a delegation of" | "any";
 
-dict p_count "two" "three" "four" "five" "some" "many" "all" "zero"
-dict p_count "a great many" "most" "a group of" "a collection of"
-dict p_count "a delegation of" "any"
+vs_actor = "engineer" | "intern" | "admirer" | "animal" | "expert" | "orphan" | "actor" |
+           "actress" | "addict" | "adult" | "agent" | "alien" | "amateur" | "analyst" |
+           "army" | "artist" | "athlete" | "aunt" | "author";
 
-dict vs_actor "engineer" "intern" "admirer" "animal" "expert" "orphan" "actor"
-dict vs_actor "actress" "addict" "adult" "agent" "alien" "amateur" "analyst"
-dict vs_actor "army" "artist" "athlete" "aunt" "author"
+cs_actor = "racer" | "rover" | "patron" | "outlaw" | "nomad" | "nanny" | "joker" | "user" |
+           "jockey" | "dog" | "man" | "woman" | "cat" | "coder" | "bishop" | "wizard" |
+           "witch" | "maid" | "czar" | "tyrant" | "saint" | "phantom" | "director" |
+           "demon" | "president" | "driver" | "lord" | "mute" | "child" | "baby" | "nurse" |
+           "judge" | "mathematician" | "lawyer" | "fly" | "lizard" | "ghost" | "bear" |
+           "fish" | "bachelor" | "bird" | "boss" | "boy" | "brother" | "buddy" | "buyer";
 
-dict cs_actor "racer" "rover" "patron" "outlaw" "nomad" "nanny" "joker" "user"
-dict cs_actor "jockey" "dog" "man" "woman" "cat" "coder" "bishop" "wizard"
-dict cs_actor "witch" "maid" "czar" "tyrant" "saint" "phantom" "director"
-dict cs_actor "demon" "president" "driver" "lord" "mute" "child" "baby" "nurse"
-dict cs_actor "judge" "mathematician" "lawyer" "fly" "lizard" "ghost" "bear"
-dict cs_actor "fish" "bachelor" "bird" "boss" "boy" "brother" "buddy" "buyer"
+p_actor = "users" | "orphans" | "racers" | "rovers" | "patrons" | "outlaws" | "nomads" |
+          "nannies" | "jokers" | "jockeys" | "dogs" | "men" | "women" | "cats" |
+          "engineers" | "bishops" | "interns" | "admirers" | "experts" | "animals" |
+          "coders" | "wizards" | "maids" | "czars" | "tyrants" | "saints" | "phantoms" |
+          "witches" | "directors" | "demons" | "presidents" | "drivers" | "children" |
+          "mutes" | "babies" | "nurses" | "judges" | "mathematicians" | "lawyers" |
+          "flies" | "lizards" | "ghosts" | "bears" | "fish" | "actors" | "actresses" |
+          "addicts" | "adults" | "agents" | "aliens" | "amateurs" | "analysts" |
+          "artists" | "athletes" | "aunts" | "bachelors" | "birds" | "bosses" | "boys" |
+          "brothers" | "buddies" | "buyers";
 
-dict p_actor "users" "orphans" "racers" "rovers" "patrons" "outlaws" "nomads"
-dict p_actor "nannies" "jokers" "jockeys" "dogs" "men" "women" "cats"
-dict p_actor "engineers" "bishops" "interns" "admirers" "experts" "animals"
-dict p_actor "coders" "wizards" "maids" "czars" "tyrants" "saints" "phantoms"
-dict p_actor "witches" "directors" "demons" "presidents" "drivers" "children"
-dict p_actor "mutes" "babies" "nurses" "judges" "mathematicians" "lawyers"
-dict p_actor "flies" "lizards" "ghosts" "bears" "fish" "actors" "actresses"
-dict p_actor "addicts" "adults" "agents" "aliens" "amateurs" "analysts"
-dict p_actor "artists" "athletes" "aunts" "bachelors" "birds" "bosses" "boys"
-dict p_actor "brothers" "buddies" "buyers"
+s_verb = "kicks" | "casts" | "imagines" | "designs" | "programs" | "enchants" |
+         "establishes" | "proves" | "delivers" | "hunts" | "holds" | "hurts" | "has" |
+         "goes to" | "dreams about" | "walks to" | "is" | "writes" | "hears" | "leaves" |
+         "wants" | "abandons" | "absorbs" | "abuses" | "accesses" | "accuses" | "acquires" |
+         "adapts" | "adds" | "addresses" | "adjusts" | "advances" | "agrees with" |
+         "alerts" | "allows" | "alters" | "approves" | "argues about" | "arranges" |
+         "arrests" | "asks about" | "assaults" | "attacks" | "attends" | "attracts" |
+         "audits" | "avoids" | "balances" | "battles" | "begins" | "believes that" |
+         "benefits from" | "blames" | "blesses" | "boils" | "boosts" | "borrows" |
+         "brings" | "builds" | "burdens" | "calls";
 
-dict s_verb "kicks" "casts" "imagines" "designs" "programs" "enchants"
-dict s_verb "establishes" "proves" "delivers" "hunts" "holds" "hurts" "has"
-dict s_verb "goes to" "dreams about" "walks to" "is" "writes" "hears" "leaves"
-dict s_verb "wants" "abandons" "absorbs" "abuses" "accesses" "accuses" "acquires"
-dict s_verb "adapts" "adds" "addresses" "adjusts" "advances" "agrees with"
-dict s_verb "alerts" "allows" "alters" "approves" "argues about" "arranges"
-dict s_verb "arrests" "asks about" "assaults" "attacks" "attends" "attracts"
-dict s_verb "audits" "avoids" "balances" "battles" "begins" "believes that"
-dict s_verb "benefits from" "blames" "blesses" "boils" "boosts" "borrows"
-dict s_verb "brings" "builds" "burdens" "calls"
+p_verb = "kick" | "cast" | "imagine" | "design" | "program" | "enchant" | "establish" |
+         "prove" | "deliver" | "hunt" | "hold" | "hurt" | "have" | "go to" | "dream about" |
+         "walk to" | "write" | "hear" | "leave" | "want" | "abandon" | "absorb" | "abuse" |
+         "access" | "accuse" | "acquire" | "adapt" | "add" | "adress" | "adjust" | "advance" |
+         "agree with" | "alert" | "allow" | "alter" | "approve" | "argue about" | "arrange" |
+         "arrest" | "ask about" | "assault" | "attack" | "attend" | "attract" | "audits" |
+         "avoid" | "balance" | "battle" | "begin" | "believe that" | "benefit from" |
+         "blame" | "bless" | "boil" | "boost" | "borrow" | "bring" | "build" | "burden" |
+         "call";
 
-dict p_verb "kick" "cast" "imagine" "design" "program" "enchant" "establish"
-dict p_verb "prove" "deliver" "hunt" "hold" "hurt" "have" "go to" "dream about"
-dict p_verb "walk to" "write" "hear" "leave" "want" "abandon" "absorb" "abuse"
-dict p_verb "access" "accuse" "acquire" "adapt" "add" "adress" "adjust" "advance"
-dict p_verb "agree with" "alert" "allow" "alter" "approve" "argue about" "arrange"
-dict p_verb "arrest" "ask about" "assault" "attack" "attend" "attract" "audits"
-dict p_verb "avoid" "balance" "battle" "begin" "believe that" "benefit from"
-dict p_verb "blame" "bless" "boil" "boost" "borrow" "bring" "build" "burden"
-dict p_verb "call"
+s_averb = "will" | "should" | "will not" | "should not" | "has to" | "could" | "can" |
+          "could not" | "shall" | "shall not" | "cannot";
 
-dict s_averb "will" "should" "will not" "should not" "has to" "could" "can"
-dict s_averb "could not" "shall" "shall not" "cannot"
+p_averb = "will" | "should" | "will not" | "should not" | "have to" | "could" | "can" |
+          "could not" | "shall" | "shall not" | "cannot";
 
-dict p_averb "will" "should" "will not" "should not" "have to" "could" "can"
-dict p_averb "could not" "shall" "shall not" "cannot"
+when = "tomorrow" | "soon" | "currently" | "perhaps" | "on weekdays" | "at night" |
+       "at noon" | "maybe" | "often" | "occasionally" | "early on" | "again" |
+       "always" | "in january" | "in february" | "in march" | "in april" | "in may" |
+       "in june" | "in july" | "in august" | "in september" | "in october" | "in november" |
+       "in december";
 
-dict when "tomorrow" "soon" "currently" "perhaps" "on weekdays" "at night"
-dict when "at noon" "maybe" "often" "perhaps" "occasionally" "early on" "again"
-dict when "always" "in january" "in february" "in march" "in april" "in may"
-dict when "in june" "in july" "in august" "in september" "in october" "in november"
-dict when "in december" "on the beach"
+where = "in Switzerland" | "in Belgium" | "in the pool" | "outside" | "inside" |
+        "on the ground" | "here" | "there" | "under the bridge" | "on Mars" | "on the beach";
 
-dict where "in Switzerland" "in Belgium" "in the pool" "outside" "inside"
-dict where "on the ground" "here" "there" "under the bridge" "on Mars"
+where_prefix = "in" | "across" | "near" | "beyond" | "close to" | "over" | "above" | "ahead of" | "around" | "behind" | "below";
+where_v_art = "a" | "the";
+where_c_art = "an" | "the";
 
-dict where_prefix "in" "across" "near" "beyond" "close to" "over" "above" "above" "ahead of" "around" "behind" "below"
-dict where_v_art "a" "the"
-dict where_c_art "an" "the"
+vs_thing = "abyss" | "album" | "angel" | "ankle" | "anvil" | "accident" |
+           "arena" | "atlas" | "insect" | "issuer" | "itch" | "ability" | "acid" | "action" |
+           "advice" | "affair" | "age" | "air" | "airport" | "aisle" | "alarm" | "alcohol" |
+           "alley" | "amount" | "anchor" | "anger" | "angle" | "answer" | "antenna" | "anxiety" |
+           "apology" | "apple" | "arch" | "arm" | "armor" | "arrow" | "art" | "artefact" |
+           "artwork" | "asset" | "asthma" | "atom" | "auction" | "avocado" | "axis";
 
-dict vs_thing "abyss" "adult" "agent" "album" "angel" "ankle" "anvil" "apple" "accident"
-dict vs_thing "arena" "armor" "atlas" "insect" "issuer" "itch" "ability" "acid" "action"
-dict vs_thing "advice" "affair" "age" "air" "airport" "aisle" "alarm" "album" "alcohol"
-dict vs_thing "alley" "amount" "anchor" "anger" "angle" "answer" "antenna" "anxiety"
-dict vs_thing "apology" "apple" "arch" "arena" "arm" "armor" "arrow" "art" "artefact"
-dict vs_thing "artwork" "asset" "asthma" "atom" "auction" "avocado" "axis"
+cs_thing = "house" | "car" | "shoe" | "tank" | "robot" | "dishwasher" | "bike" | "road" |
+           "pearl" | "paw" | "swine" | "tool" | "computer" | "tree" | "street" | "fuse" |
+           "beast" | "wall" | "rail" | "hut" | "grass" | "horse" | "leg" | "sun" |
+           "soil" | "wolf" | "hound" | "bacon" | "baron" | "basil" | "beach" |
+           "bigot" | "bison" | "block" | "blood" | "booth" | "brain" | "badge" | "bag" |
+           "balcony" | "ball" | "banana" | "banner" | "bar" | "bargain" | "barrel" |
+           "basket" | "bean" | "belt" | "bench" | "bicycle" | "blade" | "blanket" |
+           "blouse" | "boat" | "body" | "bomb" | "bonus" | "book" | "border" | "box" |
+           "bracket" | "brand" | "bread" | "breeze" | "brick" | "bridge" | "broccoli" |
+           "broom" | "brush" | "bubble" | "budget" | "buffalo" | "bulb" | "bullet" |
+           "bundle" | "bunker" | "burger" | "bus" | "business" | "bone" | "cabbage" |
+           "cabin" | "cable" | "cactus" | "cage" | "cake" | "camera" | "camps";
 
-dict cs_thing "house" "car" "shoe" "tank" "robot" "dishwasher" "bike" "road"
-dict cs_thing "pearl" "paw" "swine" "tool" "computer" "tree" "street" "fuse"
-dict cs_thing "beast" "wall" "rail" "hut" "grass" "horse" "leg" "sun"
-dict cs_thing "soil" "wolf" "hound" "bacon" "baron" "basil" "beach" "bench"
-dict cs_thing "bigot" "bison" "block" "blood" "booth" "brain" "badge" "bag"
-dict cs_thing "balcony" "ball" "banana" "banner" "bar" "bargain" "barrel"
-dict cs_thing "basket" "bean" "belt" "bench" "bicycle" "blade" "blanket"
-dict cs_thing "blouse" "boat" "body" "bomb" "bonus" "book" "border" "box"
-dict cs_thing "bracket" "brain" "brand" "bread" "breeze" "brick" "bridge" "broccoli"
-dict cs_thing "broom" "brush" "bubble" "budget" "buffalo" "bulb" "bullet"
-dict cs_thing "bundle" "bunker" "burger" "bus" "business" "bone" "cabbage"
-dict cs_thing "cabin" "cable" "cactus" "cage" "cake" "camera" "camps"
+p_thing = "insects" | "issuers" | "houses" | "cars" | "shoes" | "tanks" | "robots" |
+          "dishwashers" | "bikes" | "roads" | "pearls" | "paws" | "swines" | "tools" |
+          "computers" | "trees" | "streets" | "fuses" | "beasts" | "walls" | "rails" |
+          "huts" | "horses" | "bones" | "legs" | "wolves" | "hounds" | "baths" | "beans" |
+          "bells" | "boats" | "abilities" | "accidents" | "actions" | "affairs" | "ages" |
+          "airports" | "aisles" | "alarms" | "albums" | "alleys" | "amounts" | "anchors" |
+          "angles" | "antennas" | "apologies" | "apples" | "arches" | "arenas" | "arms" |
+          "armors" | "arrows" | "artefacts" | "artworks" | "assets" | "atoms" | "auctions" |
+          "axes" | "badges" | "bags" | "balconies" | "balls" | "bananas" | "banners" | "bars" |
+          "barrels" | "baskets" | "belts" | "benches" | "bicycles" | "blades" |
+          "blankets" | "blouses" | "bodies" | "bombs" | "books" | "borders" |
+          "boxes" | "brackets" | "brains" | "brands" | "breads" | "breezes" | "bricks" | "bridges" |
+          "broccolis" | "brooms" | "brushes" | "bubbles" | "budgets" | "buffalo" | "bulbs" |
+          "bullets" | "bundles" | "bunkers" | "burgers" | "busses" | "businesses" | "cabins" |
+          "cables" | "cactusses" | "cages" | "cakes" | "cameras" | "camp";
 
-dict p_thing "insects" "issuers" "houses" "cars" "shoes" "tanks" "robots"
-dict p_thing "dishwashers" "bikes" "roads" "pearls" "paws" "swines" "tools"
-dict p_thing "computers" "trees" "streets" "fuses" "beasts" "walls" "rails"
-dict p_thing "huts" "horses" "bones" "legs" "wolves" "hounds" "baths" "beans"
-dict p_thing "bells" "boats" "abilities" "accidents" "actions" "affairs" "ages"
-dict p_thing "airports" "aisles" "alarms" "albums" "alleys" "amounts" "anchors"
-dict p_thing "angles" "antennas" "apologies" "apples" "arches" "arenas" "arms"
-dict p_thing "armors" "arrows" "artefacts" "artworks" "assets" "atoms" "auctions"
-dict p_thing "axes" "badges" "bags" "balconies" "balls" "bananas" "banners" "bars"
-dict p_thing "barrels" "baskets" "belts" "benches" "bicycles" "blades"
-dict p_thing "blankets" "blouses" "bodies" "bombs" "books" "borders"
-dict p_thing "boxes" "brackets" "brains" "brands" "breads" "breezes" "bricks" "bridges"
-dict p_thing "broccolis" "brooms" "brushes" "bubbles" "budgets" "buffalo" "bulbs"
-dict p_thing "bullets" "bundles" "bunkers" "burgers" "busses" "businesses" "cabins"
-dict p_thing "cables" "cactusses" "cages" "cakes" "cameras" "camp"
+connect = "and" | "but" | "thus" | "hence" | "yet" | "considering" | "while" | "so" | "and also" | "because" | "before";
 
-dict connect "and" "but" "thus" "hence" "yet" "considering" "while" "so" "and also" "because" "before"
+adjective = vadjective | cadjective;
+qualify = vqualify | cqualify;
+s_thing = vs_thing | cs_thing;
+s_actor = vs_actor | cs_actor;
 
-expand adjective vadjective
-expand adjective cadjective
-expand qualify cqualify
-expand qualify vqualify
-expand s_thing vs_thing
-expand s_thing cs_thing
-expand s_actor vs_actor
-expand s_actor cs_actor
+adj_suffix = (s and (s qualify)? s adjective)?;
+vadj = vadjective adj_suffix | vqualify s adjective;
+cadj = cadjective adj_suffix | cqualify s adjective;
+adj = vadj | cadj;
 
-expand vadj vadjective
-expand vadj vqualify s adjective
-expand vadj vadjective s and s adjective
-expand vadj vadjective s and s qualify s adjective
-expand cadj cadjective
-expand cadj cqualify s adjective
-expand cadj cadjective s and s adjective
-expand cadj cadjective s and s qualify s adjective
-expand adj vadj
-expand adj cadj
+p_ver = (p_averb s)? p_verb;
+s_ver = (s_averb s)? s_verb;
 
-expand p_ver p_verb
-expand p_ver p_averb s p_verb
-expand s_ver s_verb
-expand s_ver s_averb s p_verb
+s_subject = vs_count s (cadj s s_actor | cs_actor) | cs_count s (vadj s s_actor | vs_actor);
+p_subject = (p_count s)? (adj s)? p_actor;
+object = s_subject | vs_count s (cadj s s_thing | cs_thing) | cs_count s (vadj s s_thing | vs_thing) | p_subject | (p_count s)? (adj s)? p_thing;
 
-expand s_subject vs_count s cs_actor
-expand s_subject cs_count s vs_actor
-expand s_subject vs_count s cadj s s_actor
-expand s_subject cs_count s vadj s s_actor
-expand p_subject p_actor
-expand p_subject p_count s p_actor
-expand p_subject p_count s adj s p_actor
-expand p_subject adj s p_actor
+wherephrase = where | where_prefix s (where_c_art s (vs_thing | vadj s s_thing) | where_v_art s (cs_thing | cadj s s_thing));
+sentencepart = (when s)? (s_subject s s_ver | p_subject s p_ver) s object (s wherephrase)?;
+sentence = sentencepart (s connect s sentencepart)*;
 
-expand object s_subject
-expand object vs_count s cs_thing
-expand object cs_count s vs_thing
-expand object vs_count s cadj s s_thing
-expand object cs_count s vadj s s_thing
-expand object p_subject
-expand object p_thing
-expand object p_count s p_thing
-expand object p_count s adj s p_thing
-expand object adj s p_thing
-
-expand wherephrase where
-expand wherephrase where_prefix s where_c_art s vs_thing
-expand wherephrase where_prefix s where_c_art s vadj s s_thing
-expand wherephrase where_prefix s where_v_art s cs_thing
-expand wherephrase where_prefix s where_v_art s cadj s s_thing
-
-expand sentencepart when s s_subject s s_ver s object s where
-expand sentencepart when s s_subject s s_ver s object
-expand sentencepart s_subject s s_ver s object s wherephrase
-expand sentencepart s_subject s s_ver s object
-expand sentencepart when s p_subject s p_ver s object s wherephrase
-expand sentencepart when s p_subject s p_ver s object
-expand sentencepart p_subject s p_ver s object s wherephrase
-expand sentencepart p_subject s p_ver s object
-
-expand sentence sentencepart
-expand sentence sentencepart s connect s sentence
-
-terminal sentence
+main = sentence;
