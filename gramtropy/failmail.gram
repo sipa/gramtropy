@@ -22,7 +22,7 @@ nounplur = noun letter_s;
 nounpart = article s (adjective s)? noun;
 nounpartplur = ((article s)? adjective s) nounplur;
 
-sentencepart = nounpart s (verb (s nounpart?) | verbnontrans) |
+sentencepart = nounpart s (verb (s nounpart)? | verbnontrans) |
                nounpartplur s (verbplur (s nounpartplur)? | verbnontransplur);
 
 sentence = sentencepart (s connect s sentencepart)*;
