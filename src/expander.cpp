@@ -20,11 +20,11 @@ void Expander::AddDep(const Key& key, const ThunkRef& parent) {
     }
 }
 
-void Expander::ProcessThunk(ThunkRef ref) {
+bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
 //    fprintf(stderr, "Processing thunk %p\n", &*ref);
     if (ref->done) {
 //        fprintf(stderr, "  done\n");
-        return;
+        return true;
     }
 
     if (ref->need_expansion) {
@@ -50,6 +50,10 @@ void Expander::ProcessThunk(ThunkRef ref) {
             std::set<std::string> vec;
             for (const auto& str : ref->key.ref->dict) {
                 if (str.size() == ref->key.len) {
+                    if (vec.count(str)) {
+                        error = "duplicate string '" + str + "'";
+                        return false;
+                    }
                     vec.insert(str);
                 }
             }
@@ -182,7 +186,6 @@ void Expander::ProcessThunk(ThunkRef ref) {
             break;
         }
         case Thunk::ThunkType::DEDUP: {
-            // TODO: enforce maximum node count on deduplication
             assert(ref->deps.size() == 1);
             if (!ref->deps[0]->done) {
                 break;
@@ -190,6 +193,10 @@ void Expander::ProcessThunk(ThunkRef ref) {
             ref->done = true;
             if (!ref->deps[0]->result) {
                 break;
+            }
+            if (ref->deps[0]->result->count.bits() > 30) {
+                error = "deduplication of very large set not possible";
+                return false;
             }
             auto inl = Inline(ref->deps[0]->result);
             auto sub = expgraph->NewDict(std::move(inl));
@@ -201,7 +208,7 @@ void Expander::ProcessThunk(ThunkRef ref) {
             break;
         }
         default:
-            assert(!"Unknown subgraph type");
+            assert(!"Unknown thunk type");
         }
     }
 
@@ -215,6 +222,8 @@ void Expander::ProcessThunk(ThunkRef ref) {
         }
         ref->deps.clear();
     }
+
+    return true;
 }
 
 void Expander::AddTodo(const ThunkRef& ref, bool priority) {
@@ -235,6 +244,8 @@ std::pair<ExpGraph::Ref, std::string> Expander::Expand(const Graph::Ref& ref, si
     ThunkRef dummy;
     AddDep(key, dummy);
 
+    std::string error;
+
     while (!thunkmap[key]->done && expgraph->nodes.size() <= max_nodes && thunks.size() <= max_thunks) {
         if (todo.empty()) {
             return std::make_pair(ExpGraph::Ref(), "infinite recursion");
@@ -243,7 +254,9 @@ std::pair<ExpGraph::Ref, std::string> Expander::Expand(const Graph::Ref& ref, si
         todo.pop_front();
         now->todo = false;
 
-        ProcessThunk(std::move(now));
+        if (!ProcessThunk(std::move(now), error)) {
+            return std::make_pair(ExpGraph::Ref(), error);
+        }
     }
 
     if (expgraph->nodes.size() > max_nodes) {

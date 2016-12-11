@@ -70,7 +70,7 @@ class Expander {
 
     void AddTodo(const ThunkRef& ref, bool priority = false);
     void AddDep(const Key& key, const ThunkRef& parent);
-    void ProcessThunk(ThunkRef ref);
+    bool ProcessThunk(ThunkRef ref, std::string& error);
 
 public:
     Expander(const Graph* graph_, ExpGraph* expgraph_, size_t max_nodes_, size_t max_thunks_) : graph(graph_), expgraph(expgraph_), max_nodes(max_nodes_), max_thunks(max_thunks_) {}
