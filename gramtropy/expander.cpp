@@ -182,6 +182,7 @@ void Expander::ProcessThunk(ThunkRef ref) {
             break;
         }
         case Thunk::ThunkType::DEDUP: {
+            // TODO: enforce maximum node count on deduplication
             assert(ref->deps.size() == 1);
             if (!ref->deps[0]->done) {
                 break;
@@ -228,15 +229,15 @@ void Expander::AddTodo(const ThunkRef& ref, bool priority) {
     }
 }
 
-std::pair<bool, ExpGraph::Ref> Expander::Expand(const Graph::Ref& ref, size_t len) {
+std::pair<ExpGraph::Ref, std::string> Expander::Expand(const Graph::Ref& ref, size_t len) {
     Key key(len, ref);
 
     ThunkRef dummy;
     AddDep(key, dummy);
 
-    while (!thunkmap[key]->done) {
+    while (!thunkmap[key]->done && expgraph->nodes.size() <= max_nodes && thunks.size() <= max_thunks) {
         if (todo.empty()) {
-            return std::make_pair(false, ExpGraph::Ref());
+            return std::make_pair(ExpGraph::Ref(), "infinite recursion");
         }
         ThunkRef now = std::move(todo.front());
         todo.pop_front();
@@ -245,7 +246,18 @@ std::pair<bool, ExpGraph::Ref> Expander::Expand(const Graph::Ref& ref, size_t le
         ProcessThunk(std::move(now));
     }
 
-//    fprintf(stderr, "%i thunks left todo\n", (int)todo.size());
+    if (expgraph->nodes.size() > max_nodes) {
+        return std::make_pair(ExpGraph::Ref(), "maximum node count exceeded");
+    }
 
-    return std::make_pair(true, thunkmap[key]->result);
+    if (thunks.size() > max_thunks) {
+        return std::make_pair(ExpGraph::Ref(), "maximum thunk count exceeded");
+    }
+
+    return std::make_pair(thunkmap[key]->result, "");
+}
+
+Expander::~Expander() {
+    todo.clear();
+    thunkmap.clear();
 }

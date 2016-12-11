@@ -69,6 +69,7 @@ class rclist {
     };
 
     mutable base_node sentinel;
+    mutable size_t count;
 
     mutable base_node deleted;
     bool deleting;
@@ -178,6 +179,7 @@ class rclist {
     };
 
     void unregister(base_node* ptr) {
+        --count;
         ptr->unlink();
         ptr->link_before(&deleted);
         if (deleting) {
@@ -204,7 +206,7 @@ public:
     typedef T* pointer;
     typedef const T* const_pointer;
 
-    rclist() : sentinel(nullptr, 0), deleted(nullptr, 0), deleting(false) {}
+    rclist() : sentinel(nullptr, 0), count(0), deleted(nullptr, 0), deleting(false) {}
     rclist(const rclist<T>&) = delete;
     rclist(rclist<T>&&) = delete;
     rclist<T>& operator=(const rclist<T>&) = delete;
@@ -412,6 +414,7 @@ public:
     template<typename... Args>
     iterator emplace_back(Args&&... args) {
         node* n = new node(this, std::forward<Args>(args)...);
+        ++count;
         n->link_before(&sentinel);
         return iterator(n);
     }
@@ -419,6 +422,7 @@ public:
     template<typename... Args>
     iterator emplace_front(Args&&... args) {
         node* n = new node(this, std::forward<Args>(args)...);
+        ++count;
         n->link_after(&sentinel);
         return iterator(n);
     }
@@ -426,18 +430,13 @@ public:
     template<typename... Args>
     iterator emplace(const iterator& pos, Args&&... args) {
         node* n = new node(this, std::forward<Args>(args)...);
+        ++count;
         n->link_before(pos.get());
         return iterator(n);
     }
 
     size_t size() const {
-        base_node* b = sentinel.next;
-        size_t ret = 0;
-        while (b != &sentinel) {
-            ++ret;
-            b = b->next;
-        }
-        return ret;
+        return count;
     }
 
     ~rclist() {

@@ -15,6 +15,9 @@ class Expander {
     const Graph* graph;
     ExpGraph* expgraph;
 
+    size_t max_nodes;
+    size_t max_thunks;
+
     struct Key {
         size_t len;
         size_t offset;
@@ -70,9 +73,11 @@ class Expander {
     void ProcessThunk(ThunkRef ref);
 
 public:
-    Expander(const Graph* graph_, ExpGraph* expgraph_) : graph(graph_), expgraph(expgraph_) {}
+    Expander(const Graph* graph_, ExpGraph* expgraph_, size_t max_nodes_, size_t max_thunks_) : graph(graph_), expgraph(expgraph_), max_nodes(max_nodes_), max_thunks(max_thunks_) {}
 
-    std::pair<bool, ExpGraph::Ref> Expand(const Graph::Ref& ref, size_t len);
+    ~Expander();
+
+    std::pair<ExpGraph::Ref, std::string> Expand(const Graph::Ref& ref, size_t len);
 };
 
 #endif

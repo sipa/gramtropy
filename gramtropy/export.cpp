@@ -52,8 +52,8 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
         if (node.nodetype == ExpGraph::Node::NodeType::DICT) {
             double cost = log2(node.dict.size());
 //            fprintf(stderr, "* Dict size %u\n", (unsigned)node.dict.size());
-            writenum(4 * node.dict.size() - 3, stdout);
-            writenum(node.len, stdout);
+            writenum(4 * node.dict.size() - 3, file);
+            writenum(node.len, file);
             const std::string* prev = nullptr;
             for (const auto& str : node.dict) {
                 int offset = 0;
@@ -61,9 +61,9 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
                     while (offset < node.len && str[offset] == (*prev)[offset]) {
                         ++offset;
                     }
-                    writenum(offset, stdout);
+                    writenum(offset, file);
                 }
-                fwrite(str.data() + offset, str.size() - offset, 1, stdout);
+                fwrite(str.data() + offset, str.size() - offset, 1, file);
                 prev = &str;
             }
             data.success = cost + 1.0;
@@ -82,7 +82,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             double success = 0;
             double fail = 0;
             double fact = 1.0;
-            writenum(4 * node.refs.size() - 6, stdout);
+            writenum(4 * node.refs.size() - 6, file);
             std::sort(subs.begin(), subs.end());
             for (const auto& sub : subs) {
                 auto it2 = dump.find(std::get<1>(sub));
@@ -90,8 +90,8 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
                 fail += (success + subdata.fail) * fact;
                 success += subdata.success;
                 fact *= 0.1;
-                writenum(std::get<2>(sub), stdout);
-                writenum(cnt - subdata.number - 1, stdout);
+                writenum(std::get<2>(sub), file);
+                writenum(cnt - subdata.number - 1, file);
 //                fprintf(stderr, "  * node %i at pos %i\n", subdata.number, std::get<2>(sub));
             }
             data.success = 1.0 + success;
@@ -107,7 +107,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
             }
             double success = 0;
             double fail = 0;
-            writenum(4 * node.refs.size() - 5, stdout);
+            writenum(4 * node.refs.size() - 5, file);
             if (ref->len != -1) { // Don't reorder multilength disjunctions (no need, as they're fast regardless).
                 std::sort(subs.begin(), subs.end());
             }
@@ -118,7 +118,7 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
                 BigNum ratio = x.divmod(node.count);
                 success += (fail + subdata.success) * (ratio.get_d() * small);
                 fail += subdata.fail;
-                writenum(cnt - subdata.number - 1, stdout);
+                writenum(cnt - subdata.number - 1, file);
 //                fprintf(stderr, "  * node %i (%g suc, %g fail)\n", subdata.number, subdata.success, subdata.fail);
             }
             data.success = 1.0 + success;
@@ -131,6 +131,6 @@ void Export(ExpGraph& expgraph, const ExpGraph::Ref& ref, FILE* file) {
         }
         cnt++;
     }
-    writenum(0, stdout);
+    writenum(0, file);
 }
 

@@ -3,80 +3,206 @@
 #include "expgraph.h"
 #include "expander.h"
 #include "export.h"
+#include <unistd.h>
 
 namespace {
 
-ExpGraph::Ref ExpandForBits(const Graph& graph, const Graph::Ref& main, ExpGraph& expgraph, double bits, double overshoot, size_t maxlen) {
-    Expander exp(&graph, &expgraph);
-    double goalbits = bits + log(1.0 + overshoot) / log(2.0);
+ExpGraph::Ref ExpandForBits(const Graph& graph, const Graph::Ref& main, ExpGraph& expgraph, double minbits, double overshoot, size_t minlen, size_t maxlen, size_t maxnodes, size_t maxthunks) {
+    Expander exp(&graph, &expgraph, maxnodes, maxthunks);
+    double goalbits = minbits + log1p(overshoot) / log(2.0);
 
     std::vector<ExpGraph::Ref> refs;
     BigNum total;
-    for (size_t len = 0; len <= maxlen; len++) {
+    for (size_t len = minlen; len <= maxlen; len++) {
         auto r = exp.Expand(main, len);
-        if (!r.first) {
+        if (r.second.size() > 0) {
+            fprintf(stderr, "Expansion failure: %s\n", r.second.c_str());
             return ExpGraph::Ref();
         }
-        if (!r.second.defined()) {
+        if (!r.first) {
             continue;
         }
-        total += r.second->count;
-        refs.emplace_back(std::move(r.second));
+        total += r.first->count;
+        refs.emplace_back(std::move(r.first));
         if (total.log2() >= goalbits) {
             size_t start = 0;
             while (start < refs.size()) {
                 BigNum next = total;
                 next -= refs[start]->count;
-                if (next.log2() >= bits) {
+                if (next.log2() >= minbits) {
                     total = std::move(next);
                     ++start;
                 } else {
                     refs.erase(refs.begin(), refs.begin() + start);
-                    fprintf(stderr, "Usings lengths %lu..%lu\n", (unsigned long)refs.front()->len, (unsigned long)refs.back()->len);
+                    printf("Using length range %lu..%lu\n", (unsigned long)refs.front()->len, (unsigned long)refs.back()->len);
                     return expgraph.NewDisjunct(std::move(refs));
                 }
             }
         }
     }
 
+    fprintf(stderr, "No solution with enough entropy in range\n");
     return ExpGraph::Ref();
+}
+
+bool WriteFile(const char *file, ExpGraph& expgraph, const ExpGraph::Ref& emain) {
+    FILE* fp = fopen(file, "w");
+    if (!fp) {
+        fprintf(stderr, "Unable to open file '%s'\n", file);
+        return false;
+    }
+    Export(expgraph, emain, fp);
+    fclose(fp);
+    return true;
+}
+
+Graph::Ref ParseFile(const char *file, Graph& graph) {
+    FILE* fp = fopen(file, "r");
+    if (!fp) {
+        fprintf(stderr, "Unable to open file '%s'\n", file);
+        return Graph::Ref();
+    }
+    std::vector<char> data;
+    ssize_t tlen = 0;
+    while (true) {
+        data.resize(tlen + 65536);
+        ssize_t len = fread(data.data() + tlen, 1, 65536, fp);
+        if (len < 0) {
+            fprintf(stderr, "Unable to read from file '%s'\n", file);
+            return Graph::Ref();
+        }
+        if (len == 0) {
+            data.resize(tlen);
+            break;
+        }
+        tlen += len;
+    }
+    fclose(fp);
+
+    Graph::Ref main;
+    std::string parse_error = Parse(graph, main, data.data(), tlen);
+    if (!main.defined()) {
+        fprintf(stderr, "Parse error: %s\n", parse_error.c_str());
+        return Graph::Ref();
+    }
+    return main;
 }
 
 }
 
 int main(int argc, char** argv) {
-    char *buf = (char*)malloc(1048576);
-    ssize_t len = fread(buf, 1, 1048576, stdin);
-    int reslen = argc > 1 ? strtoul(argv[1], NULL, 10) : 16;
+    size_t minlen = 0;
+    size_t maxlen = 1024;
+    size_t maxnodes = 1000000;
+    size_t maxthunks = 2000000;
+    double overshoot = 0.2;
+    double bits = 64;
+    const char* infile = nullptr;
+    const char* outfile = nullptr;
+    bool invalid_usage = false;
+    bool help = false;
 
-    if (len < 0) {
-        fprintf(stderr, "Failed to read\n");
+    int opt;
+    while ((opt = getopt(argc, argv, "b:l:u:N:T:O:h")) != -1) {
+        switch (opt) {
+        case 'b':
+            bits = strtod(optarg, nullptr);
+            break;
+        case 'l':
+            minlen = strtoul(optarg, nullptr, 10);
+            break;
+        case 'u':
+            maxlen = strtoul(optarg, nullptr, 10);
+            break;
+        case 'N':
+            maxnodes = strtoul(optarg, nullptr, 10);
+            break;
+        case 'T':
+            maxthunks = strtoul(optarg, nullptr, 10);
+            break;
+        case 'O':
+            overshoot = strtod(optarg, nullptr);
+            break;
+        case 'h':
+            help = true;
+        }
+    }
+
+    if (bits <= 0 || bits > 65536) {
+        fprintf(stderr, "Bits out of range (0.0-65536.0)\n");
+        invalid_usage = true;
+    }
+
+    if (minlen > 65536) {
+        fprintf(stderr, "Minimum length out of range (0.0-65536.0)\n");
+        invalid_usage = true;
+    }
+
+    if (maxlen < minlen || maxlen > 65536) {
+        fprintf(stderr, "Maximum length out of range (minimum length-65536)\n");
+        invalid_usage = true;
+    }
+
+    if (maxnodes < 10 || maxnodes > 1000000000) {
+        fprintf(stderr, "Maximum nodes out of range (10-1000000000)\n");
+        invalid_usage = true;
+    }
+
+    if (maxthunks < 10 || maxthunks > 1000000000) {
+        fprintf(stderr, "Maximum thunks out of range (10-1000000000)\n");
+        invalid_usage = true;
+    }
+
+    if (overshoot < 0 || overshoot > 1) {
+        fprintf(stderr, "Overshoot out of range (0.0-1.0)\n");
+        invalid_usage = true;
+    }
+
+    if (optind + 1 > argc) {
+        fprintf(stderr, "Expected input filename\n");
+        invalid_usage = true;
+    }
+
+    if (optind + 2 > argc) {
+        fprintf(stderr, "Expected output filename\n");
+        invalid_usage = true;
+    }
+
+    if (invalid_usage || help) {
+        fprintf(stderr, "Usage: %s [options...] infile outfile\n", *argv);
+        fprintf(stderr, "Options:\n");
+        fprintf(stderr, "  -b bits: use a range with at least bits bits of entropy (default: 64.0)\n");
+        fprintf(stderr, "  -l minlen: generate phrases of at least minlen characters (default: 0)\n");
+        fprintf(stderr, "  -u maxlen: generate phrases of at most maxlen characters (default: 1024)\n");
+        fprintf(stderr, "  -N maxnodes, -T maxthunks, -O overshoot: miscelleanous tweaks\n");
+        if (invalid_usage) {
+            return -1;
+        }
+        return 0;
+    }
+
+    infile = argv[optind];
+    outfile = argv[optind + 1];
+
+    Graph graph;
+    Graph::Ref main = ParseFile(infile, graph);
+    if (!main) {
         return 1;
     }
 
-    Graph graph;
-    Graph::Ref main;
-    std::string parse_error = Parse(graph, main, buf, len);
-    if (!main.defined()) {
-        fprintf(stderr, "Parse error: %s\n", parse_error.c_str());
+    ExpGraph expgraph;
+    ExpGraph::Ref emain = ExpandForBits(graph, main, expgraph, bits, overshoot, minlen, maxlen, maxnodes, maxthunks);
+    if (!emain.defined()) {
         return 2;
     }
+    main = Graph::Ref();
 
-    free(buf);
-
-    ExpGraph expgraph;
-    ExpGraph::Ref emain = ExpandForBits(graph, main, expgraph, 500, 0.2, 1024);
-    if (!emain.defined()) {
-        fprintf(stderr, "Unable to expand graph\n");
-        return 3;
-    }
     Optimize(expgraph);
 
-    fprintf(stderr, "%lu node model, %s combinations (%g bits)\n", (unsigned long)expgraph.nodes.size(), emain->count.hex().c_str(), emain->count.log2());
+    printf("Result: %s combinations (%g bits)\n", emain->count.hex().c_str(), emain->count.log2());
 
-    Export(expgraph, emain, stdout);
+    WriteFile(outfile, expgraph, emain);
 
     emain = ExpGraph::Ref();
-    main = Graph::Ref();
     return 0;
 }
