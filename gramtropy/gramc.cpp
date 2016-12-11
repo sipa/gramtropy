@@ -168,6 +168,9 @@ int main(int argc, char** argv) {
         invalid_usage = true;
     }
 
+    infile = argv[optind];
+    outfile = argv[optind + 1];
+
     if (strcmp(infile, outfile) == 0) {
         fprintf(stderr, "Refusing to overwrite input file\n");
         invalid_usage = true;
@@ -186,8 +189,6 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    infile = argv[optind];
-    outfile = argv[optind + 1];
 
     Graph graph;
     Graph::Ref main = ParseFile(infile, graph);
