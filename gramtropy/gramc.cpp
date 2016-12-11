@@ -168,6 +168,11 @@ int main(int argc, char** argv) {
         invalid_usage = true;
     }
 
+    if (strcmp(infile, outfile) == 0) {
+        fprintf(stderr, "Refusing to overwrite input file\n");
+        invalid_usage = true;
+    }
+
     if (invalid_usage || help) {
         fprintf(stderr, "Usage: %s [options...] infile outfile\n", *argv);
         fprintf(stderr, "Options:\n");
