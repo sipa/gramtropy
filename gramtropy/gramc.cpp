@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
     size_t minlen = 0;
     size_t maxlen = 1024;
     size_t maxnodes = 1000000;
-    size_t maxthunks = 2000000;
+    size_t maxthunks = 250000;
     double overshoot = 0.2;
     double bits = 64;
     const char* infile = nullptr;
