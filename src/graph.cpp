@@ -25,7 +25,7 @@ namespace {
         return false;
     }
 
-    static void CollapseDisjunct(Graph* graph, const Graph::Ref& node, std::set<std::string>& dict, std::vector<Graph::Ref>& refs) {
+    static void CollapseDisjunct(Graph* graph, const Graph::Ref& node, std::vector<std::string>& dict, std::vector<Graph::Ref>& refs) {
         assert(node->nodetype == Graph::Node::DISJUNCT);
         for (Graph::Ref& ref : node->refs) {
             if (ref->nodetype == Graph::Node::NONE) continue;
@@ -35,11 +35,8 @@ namespace {
                 if (dict.size() < ref->dict.size()) {
                     dict.swap(ref->dict);
                 }
-                for (const auto& str : ref->dict) {
-                    if (dict.count(str)) {
-                        fprintf(stderr, "Duplicate: %s\n", str.c_str());
-                    }
-                    dict.insert(str);
+                for (auto& str : ref->dict) {
+                    dict.emplace_back(std::move(str));
                 }
             } else if (ref->nodetype == Graph::Node::CONCAT && ref->refs.size() == 1) {
                 refs.emplace_back(ref->refs[0]);
@@ -89,7 +86,7 @@ namespace {
             return false;
         }
         std::vector<Graph::Ref> refs;
-        std::set<std::string> dict;
+        std::vector<std::string> dict;
         CollapseDisjunct(graph, node, dict, refs);
         if (dict.size() == 0 && refs.size() == 1 && refs[0].unique()) {
             node->refs = std::move(refs[0]->refs);
@@ -239,7 +236,7 @@ Graph::Ref Graph::NewDedup(Graph::Ref&& ref) {
     return ret;
 }
 
-Graph::Ref Graph::NewDict(std::set<std::string>&& dict) {
+Graph::Ref Graph::NewDict(std::vector<std::string>&& dict) {
     Graph::Ref ret = NewNode(Graph::Node::DICT);
     ret->dict = std::move(dict);
     Optimize(this, ret);
