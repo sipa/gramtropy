@@ -1,17 +1,14 @@
-# symbol declares which symbols exists
-symbol con vow cv word
+# Simple demo grammar that generates words of alternating vowels and consonsants.
 
-# dict allows a symbol to expand to any of the following string literals
-dict con b c d f g h j k l m n p q r s t v w x z
-dict vow a e i o u
+# Strings are written between "", and | separates different options.
+vow = "a" | "e" | "i" | "o" | "u";
+con = "b" | "c" | "d" | "f" | "g" | "h" | "j" | "k" | "l" | "m" | "n" | "p" | "q" | "r" | "s" | "t" | "v" | "w" | "x" | "z";
 
-# expand allows a symbol to expand to a concatenation of other symbols
-expand cv con vow
-expand cv con vow cv
-expand word cv
-expand word vow cv
-expand word cv con
-expand word vow cv con
+# ? marks an optional symbol, and + repeats something at least once.
+word = vow con? | vow? (con vow)+ con?;
 
-# terminal selects the root of the grammar
-terminal word
+# * repeats something zero or more times.
+words = word (" " word)*;
+
+# main indicates the final result.
+main = words;
