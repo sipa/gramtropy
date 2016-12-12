@@ -4,7 +4,6 @@
 #include "rclist.h"
 #include "bignum.h"
 #include "graph.h"
-#include "strings.h"
 
 #include <vector>
 

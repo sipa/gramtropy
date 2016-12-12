@@ -1,6 +1,7 @@
 #include "export.h"
 #include <algorithm>
 #include <math.h>
+#include <map>
 
 namespace {
 

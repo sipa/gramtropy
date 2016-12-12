@@ -4,6 +4,7 @@
 #include "expander.h"
 #include "export.h"
 #include <unistd.h>
+#include <string.h>
 
 namespace {
 
