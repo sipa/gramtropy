@@ -128,52 +128,54 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (bits <= 0 || bits > 65536) {
+    if (!help && (bits <= 0 || bits > 65536)) {
         fprintf(stderr, "Bits out of range (0.0-65536.0)\n");
         invalid_usage = true;
     }
 
-    if (minlen > 65536) {
+    if (!help && (minlen > 65536)) {
         fprintf(stderr, "Minimum length out of range (0.0-65536.0)\n");
         invalid_usage = true;
     }
 
-    if (maxlen < minlen || maxlen > 65536) {
+    if (!help && (maxlen < minlen || maxlen > 65536)) {
         fprintf(stderr, "Maximum length out of range (minimum length-65536)\n");
         invalid_usage = true;
     }
 
-    if (maxnodes < 10 || maxnodes > 1000000000) {
+    if (!help && (maxnodes < 10 || maxnodes > 1000000000)) {
         fprintf(stderr, "Maximum nodes out of range (10-1000000000)\n");
         invalid_usage = true;
     }
 
-    if (maxthunks < 10 || maxthunks > 1000000000) {
+    if (!help && (maxthunks < 10 || maxthunks > 1000000000)) {
         fprintf(stderr, "Maximum thunks out of range (10-1000000000)\n");
         invalid_usage = true;
     }
 
-    if (overshoot < 0 || overshoot > 1) {
+    if (!help && (overshoot < 0 || overshoot > 1)) {
         fprintf(stderr, "Overshoot out of range (0.0-1.0)\n");
         invalid_usage = true;
     }
 
-    if (optind + 1 > argc) {
+    if (!help && optind + 1 > argc) {
         fprintf(stderr, "Expected input filename\n");
         invalid_usage = true;
     }
 
-    if (optind + 2 > argc) {
+    if (!help && optind + 2 > argc) {
         fprintf(stderr, "Expected output filename\n");
         invalid_usage = true;
     }
 
-    infile = argv[optind];
-    outfile = argv[optind + 1];
+    if (!invalid_usage && !help) {
+        infile = argv[optind];
+        outfile = argv[optind + 1];
 
-    if (strcmp(infile, outfile) == 0) {
-        fprintf(stderr, "Refusing to overwrite input file\n");
-        invalid_usage = true;
+        if (strcmp(infile, outfile) == 0) {
+            fprintf(stderr, "Refusing to overwrite input file\n");
+            invalid_usage = true;
+        }
     }
 
     if (invalid_usage || help) {
