@@ -99,7 +99,6 @@ int main(int argc, char** argv) {
             fprintf(stderr, "Cannot parse hex number '%s'\n", str);
             return 4;
         }
-        fprintf(stderr, "Encoding number %s\n", num.hex().c_str());
         if (num >= graph.nodes.back().count) {
             fprintf(stderr, "Number out of range (max %s)\n", graph.nodes.back().count.hex().c_str());
             return 5;
