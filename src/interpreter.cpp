@@ -39,26 +39,6 @@ size_t Generate(std::vector<char>& out, size_t pos, const FlatGraph& graph, cons
     assert(false);
 }
 
-BigNum RandomInteger(const BigNum& range) {
-    BigNum out;
-    int bits = range.bits();
-    std::vector<uint8_t> data;
-    data.resize((bits + 7)/8);
-    FILE* rng = fopen("/dev/urandom", "rb");
-    do {
-        size_t r = fread(&data[0], data.size(), 1, rng);
-        if (r != 1) {
-            throw std::runtime_error("Unable to read from RNG");
-        }
-        if (bits % 8) {
-            data[0] >>= (8 - (bits % 8));
-        }
-        out = BigNum(&data[0], data.size());
-    } while (out >= range);
-    fclose(rng);
-    return out;
-}
-
 bool Parse(const FlatGraph& graph, const FlatNode* ref, const char* chr, int len, BigNum& out) {
     if (ref->len >= 0) {
         if (len != ref->len) {
@@ -122,16 +102,4 @@ std::string Generate(const FlatGraph& graph, const FlatNode* ref, BigNum&& num) 
     std::vector<char> out;
     size_t len = Generate(out, 0, graph, ref, std::move(num));
     return std::string(out.begin(), out.begin() + len);
-}
-
-std::string Generate(const FlatGraph& graph, const FlatNode* ref) {
-    BigNum num = RandomInteger(ref->count);
-    fprintf(stderr, "RNG: %s\n", num.hex().c_str());
-    std::string str = Generate(graph, ref, BigNum(num));
-    fprintf(stderr, "GEN: %s\n", str.c_str());
-    BigNum nnum;
-    bool ret = Parse(graph, ref, str, nnum);
-    assert(ret);
-    assert(num == nnum);
-    return str;
 }

@@ -28,6 +28,5 @@ struct FlatGraph {
 
 bool Parse(const FlatGraph& graph, const FlatNode* ref, const std::string& str, BigNum& out);
 std::string Generate(const FlatGraph& graph, const FlatNode* ref, BigNum&& num);
-std::string Generate(const FlatGraph& graph, const FlatNode* ref);
 
 #endif
