@@ -45,72 +45,147 @@ bool ParseFile(const char *file, FlatGraph& graph) {
     return true;
 }
 
+enum RunMode {
+    MODE_GENERATE,
+    MODE_ENCODE,
+    MODE_DECODE,
+    MODE_ENCODE_STREAM,
+    MODE_DECODE_STREAM,
+    MODE_INFO,
+    MODE_HELP,
+};
+
 }
 
 int main(int argc, char** argv) {
-    bool help = false;
-    bool encode = false;
+    RunMode mode = MODE_GENERATE;
     int generate = 1;
     int opt;
     const char* str = nullptr;
-    while ((opt = getopt(argc, argv, "d:e:g:h")) != -1) {
+    while ((opt = getopt(argc, argv, "iDEd:e:g:h")) != -1) {
         switch (opt) {
+        case 'i':
+            mode = MODE_INFO;
+            break;
+        case 'D':
+            mode = MODE_DECODE_STREAM;
+            break;
+        case 'E':
+            mode = MODE_ENCODE_STREAM;
+            break;
         case 'd':
+            mode = MODE_DECODE;
             str = optarg;
-            encode = false;
-            generate = 0;
             break;
         case 'e':
+            mode = MODE_ENCODE;
             str = optarg;
-            encode = true;
-            generate = 0;
             break;
         case 'g':
-            encode = false;
+            mode = MODE_GENERATE;
             generate = strtoul(optarg, NULL, 10);
             break;
         case 'h':
-            help = true;
+            mode = MODE_HELP;
             break;
         }
     }
 
-    if (help || optind + 1 > argc || (generate == 0 && str == nullptr)) {
-        fprintf(stderr, "Usage: %s [-g n] file      generate n phrases (default 1)\n", *argv);
-        fprintf(stderr, "       %s -e hexnum file   generate phrase number hexnum\n", *argv);
-        fprintf(stderr, "       %s -d str file:     decode phrase string str to hex\n", *argv);
-        return 1;
+    if (mode == MODE_HELP || optind + 1 > argc) {
+        fprintf(stderr, "Usage: %s [-g n] file      Generate n random phrases (default 1)\n", *argv);
+        fprintf(stderr, "       %s -e hexnum file   Encode hexadecimal into phrase\n", *argv);
+        fprintf(stderr, "       %s -d str file      Decode phrase into hexadecimal \n", *argv);
+        fprintf(stderr, "       %s -E file          Encode hexadecimals read from stdin\n", *argv);
+        fprintf(stderr, "       %s -D file          Decode phrases read from stdin\n", *argv);
+        fprintf(stderr, "       %s -i file          Show information about file\n", *argv);
+        return mode != MODE_HELP;
     }
 
     FlatGraph graph;
     if (!ParseFile(argv[optind], graph)) {
         return 2;
     }
+    const FlatNode* main = &graph.nodes.back();
 
-    if (generate) {
+    switch (mode) {
+    case MODE_GENERATE:
         while (generate--) {
-            if (!Generate(graph, &graph.nodes.back())) {
+            if (!Generate(graph, main)) {
                 return 3;
             }
         }
-    } else if (encode) {
+        break;
+    case MODE_ENCODE:
+    {
         BigNum num;
         if (!num.set_hex(str)) {
             fprintf(stderr, "Cannot parse hex number '%s'\n", str);
             return 4;
         }
-        if (num >= graph.nodes.back().count) {
-            fprintf(stderr, "Number out of range (max %s)\n", graph.nodes.back().count.hex().c_str());
+        if (num >= main->count) {
+            fprintf(stderr, "Number out of range (max %s)\n", main->count.hex().c_str());
             return 5;
         }
-        printf("%s\n", Generate(graph, &graph.nodes.back(), std::move(num)).c_str());
-    } else {
+        printf("%s\n", Generate(graph, main, std::move(num)).c_str());
+        break;
+    }
+    case MODE_DECODE:
+    {
         BigNum num;
-        if (!Parse(graph, &graph.nodes.back(), str, num)) {
+        if (!Parse(graph, main, str, num)) {
             printf("-1\n");
         } else {
             printf("%s\n", num.hex().c_str());
         }
+        break;
+    }
+    case MODE_INFO:
+    {
+        printf("Combinations: %s\n", main->count.hex().c_str());
+        printf("Bits: %g\n", main->count.log2());
+        printf("Nodes: %lu\n", (unsigned long)graph.nodes.size());
+        break;
+    }
+    case MODE_ENCODE_STREAM:
+    {
+        char buf[8192];
+        while (fgets(buf, sizeof(buf), stdin) != nullptr) {
+            char* ptr = strchr(buf, '\n');
+            if (ptr) {
+                *ptr = 0;
+            }
+            BigNum num;
+            if (!num.set_hex(buf)) {
+                fprintf(stderr, "Cannot parse hex number '%s'\n", buf);
+                return 4;
+            }
+            if (num >= main->count) {
+                fprintf(stderr, "Number %s out of range (max %s)\n", num.hex().c_str(), main->count.hex().c_str());
+                return 5;
+            }
+            printf("%s\n", Generate(graph, main, std::move(num)).c_str());
+        }
+        break;
+    }
+    case MODE_DECODE_STREAM:
+    {
+        char buf[8192];
+        while (fgets(buf, sizeof(buf), stdin) != nullptr) {
+            char* ptr = strchr(buf, '\n');
+            if (ptr) {
+                *ptr = 0;
+            }
+            BigNum num;
+            if (!Parse(graph, main, buf, num)) {
+                printf("-1\n");
+            } else {
+                printf("%s\n", num.hex().c_str());
+            }
+        }
+        break;
+    }
+    default:
+        break;
     }
 
     return 0;
