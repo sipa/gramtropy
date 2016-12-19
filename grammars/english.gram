@@ -7,15 +7,23 @@ quantity_c_s = quantity_vc_s | "a";
 quantity_v_p = quantity_vc_p;
 quantity_c_p = quantity_vc_p;
 
-c_value = dict(delicious charming nice terrible horrible despicable beautiful);
-v_value = dict(awesome awful);
+c_value = dict(delicious charming nice terrible horrible despicable beautiful
+               distasteful disgusting disasterous ridiculous good bad supreme
+               cute substandard poor deficient defective faulty miserable
+               crappy disagreeable worthless fine sound fit robust sturdy strong
+               weak superior satisfactory firm delightful notable famed
+               known renowned marvelous superb neat worthy pleasing);
+v_value = dict(awesome awful excellent exquisite ugly evil inferior unpleasant
+               imperfect unacceptable unsuitable unsatisfactory inadequate unwelcome
+               appropriate inappropriate enjoyable eminent exceptional);
 value = c_value | v_value;
 
-c_size = dict(big small large tiny tall great short huge massive gargantuous humongous microscopic);
-v_size = none;
+c_size = dict(big small large tiny tall great short huge massive gargantuous humongous
+              microscopic spacious gigantic grand collosal monumental copious);
+v_size = dict(enormous immense extensive immeasurable);
 size = c_size | v_size;
 
-c_temperature = dict(hot cold lukewarm);
+c_temperature = dict(hot cold lukewarm scalding blazing frosty icy cool warm);
 v_temperature = none;
 temperature = c_temperature | v_temperature;
 
@@ -25,12 +33,12 @@ c_age = dict(new) | (dict("1" "2" "3" "4" "5" "6" "7" "9") | "1" dict("0" "1" "2
 v_age = dict(old ancient) | ("8" | "18" | "8" digit) "-year-old";
 age = c_age | v_age;
 
-c_shape = dict(round square rectangular);
-v_shape = none;
+c_shape = dict(round square rectangular spherical curled cylindrical triangular pyramidal sharp twisted);
+v_shape = dict(elliptical oval);
 shape = c_shape | v_shape;
 
-c_color = dict(red green blue yellow white black pink grey purple);
-v_color = none;
+c_color = dict(red green blue yellow white black pink grey purple fuchsia brown chestnut mahogany peach cerulean violet magenta maroon scarlet);
+v_color = dict(indigo orange aquamarine);
 color = c_color | v_color;
 
 c_origin = dict(Chinese Victorian Japanese German Dutch French Spanish
