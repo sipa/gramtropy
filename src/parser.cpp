@@ -187,6 +187,15 @@ public:
         symbols["none"] = gra->NewNone();
     }
 
+    Graph::Ref ParseDict() {
+        std::vector<std::string> dict;
+        while (lexer->PeekType() == Lexer::Token::SYMBOL || lexer->PeekType() == Lexer::Token::STRING) {
+            auto l = lexer->Get();
+            dict.emplace_back(std::move(l.text));
+        }
+        return graph->NewDict(std::move(dict));
+    }
+
     Graph::Ref ParseSymbol(std::string&& name) {
         auto it = symbols.find(name);
         if (it == symbols.end()) {
@@ -227,6 +236,15 @@ public:
                         return Graph::Ref();
                     }
                     nodes.emplace_back(EXPR, graph->NewDedup(std::move(res)));
+                } else if (tok.text == "dict" && lexer->PeekType() == Lexer::Token::OPEN_BRACE) {
+                    lexer->Skip();
+                    auto res = ParseDict();
+                    if (lexer->PeekType() != Lexer::Token::CLOSE_BRACE) {
+                        error = "closing brace expected";
+                        return Graph::Ref();
+                    }
+                    lexer->Skip();
+                    nodes.emplace_back(EXPR, std::move(res));
                 } else {
                     nodes.emplace_back(EXPR, ParseSymbol(std::move(tok.text)));
                 }

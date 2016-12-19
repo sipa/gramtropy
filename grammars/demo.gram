@@ -2,7 +2,9 @@
 
 # Strings are written between "", and | separates different options.
 vow = "a" | "e" | "i" | "o" | "u";
-con = "b" | "c" | "d" | "f" | "g" | "h" | "j" | "k" | "l" | "m" | "n" | "p" | "q" | "r" | "s" | "t" | "v" | "w" | "x" | "z";
+
+# Or the more compact dict construction can be used.
+con = dict("b" c d f "g" "h" j k l m n p q r s t v w x "z");
 
 # ? marks an optional symbol, and + repeats something at least once.
 word = vow con? | vow? (con vow)+ con?;
