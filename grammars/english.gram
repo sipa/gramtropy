@@ -1,0 +1,78 @@
+_ = " ";
+
+quantity_vc_s = dict(one the);
+quantity_vc_p = "the "? dict(two three four five many) | dict(some most no "a few" several multiple);
+quantity_v_s = quantity_vc_s | "an";
+quantity_c_s = quantity_vc_s | "a";
+quantity_v_p = quantity_vc_p;
+quantity_c_p = quantity_vc_p;
+
+c_value = dict(delicious charming nice terrible horrible despicable beautiful);
+v_value = dict(awesome awful);
+value = c_value | v_value;
+
+c_size = dict(big small large tiny tall great short huge massive gargantuous humongous microscopic);
+v_size = none;
+size = c_size | v_size;
+
+c_temperature = dict(hot cold lukewarm);
+v_temperature = none;
+temperature = c_temperature | v_temperature;
+
+digit = dict("0" "1" "2" "3" "4" "5" "6" "7" "8" "9");
+
+c_age = dict(new) | (dict("1" "2" "3" "4" "5" "6" "7" "9") | "1" dict("0" "1" "2" "3" "4" "5" "6" "7" "9") | dict("2" "3" "4" "5" "6" "7" "9") digit) "-year-old";
+v_age = dict(old ancient) | ("8" | "18" | "8" digit) "-year-old";
+age = c_age | v_age;
+
+c_shape = dict(round square rectangular);
+v_shape = none;
+shape = c_shape | v_shape;
+
+c_color = dict(red green blue yellow white black pink grey purple);
+v_color = none;
+color = c_color | v_color;
+
+c_origin = dict(Chinese Victorian Japanese German Dutch French Spanish
+                Portugese Greek Swiss Canadian Scandinavian Danish Mexican
+                Russian Mongolian Welsh Scottish Irish British Roman Czech
+                Turkish Polish Swedish Norwegian Finnish Macedonian Maltese
+                Brazilian Nigerian Thai Colombian Peruvian Nepalese Taiwanese
+                Syrian Belgian Cuban Haitian Bolivian Hungarian);
+v_origin = dict(Italian Icelandic Indonesian English American Ukrainian
+                Albanian Ethiopian Egyptian Argentinian Algerian Australian
+                Austrian Israelian);
+origin = c_origin | v_origin;
+
+c_material = dict(wooden glass silver bronze golden plastic leather metal ceramic stone diamond tin);
+v_material = none;
+material = c_material | v_material;
+
+c_noun_s = dict(vase table chain shoe machine ball television carpet wire house lamp building pillar oven book wall);
+v_noun_s = none;
+c_noun_p = dict(vases tables chains shoes machines balls televisions carpets wires houses lamps buildings pillars ovens books walls);
+v_noun_p = none;
+noun_s = c_noun_s | v_noun_s;
+noun_p = c_noun_p | v_noun_p;
+
+adj_x1 = (material _)?;
+adj_x2 = (origin _)? adj_x1;
+adj_x3 = (shape _)? adj_x2;
+adj_x4 = (age _)? adj_x3;
+adj_x5 = (temperature _)? adj_x4;
+adj_x6 = (size _)? adj_x5;
+adj_x7 = (value _)? adj_x6;
+
+c_adj = c_value _ adj_x6 | c_size _ adj_x5 | c_temperature _ adj_x4 | c_age _ adj_x3 | c_shape _ adj_x2 | c_origin _ adj_x1 | c_material _;
+v_adj = v_value _ adj_x6 | v_size _ adj_x5 | v_temperature _ adj_x4 | v_age _ adj_x3 | v_shape _ adj_x2 | v_origin _ adj_x1 | v_material _;
+
+noun = (quantity_c_s _ c_adj | quantity_v_s _ v_adj) noun_s |
+       (quantity_c_p _ c_adj | quantity_v_p _ v_adj) noun_p |
+       quantity_c_s _ c_noun_s |
+       quantity_v_s _ v_noun_s |
+       quantity_c_p _ c_noun_p |
+       quantity_v_p _ v_noun_p |
+       c_noun_p |
+       v_noun_p;
+
+main = noun;
