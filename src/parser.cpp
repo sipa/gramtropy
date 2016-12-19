@@ -14,6 +14,7 @@ public:
             ERROR,
             SYMBOL,
             STRING,
+            REGEXP,
             OPEN_BRACE,
             CLOSE_BRACE,
             ASTERISK,
@@ -102,6 +103,31 @@ public:
         case ';':
             ++it;
             return Token(Token::SEMICOLON);
+        case '/': {
+            bool escaped = false;
+            ++it;
+            std::string str;
+            while (true) {
+                bool wasescaped = escaped;
+                escaped = false;
+                if (it == itend) {
+                    return Token(Token::ERROR);
+                }
+                if (*it == '/' && !wasescaped) {
+                    ++it;
+                    break;
+                }
+                str += *it;
+                if (*it == '\n') {
+                    ++line;
+                    line_begin = std::next(it);
+                } else if (*it == '\\' && !wasescaped) {
+                    escaped = true;
+                }
+                ++it;
+            }
+            return Token(Token::REGEXP, std::move(str));
+        }
         case '"': {
             ++it;
             std::string str;
@@ -193,6 +219,12 @@ public:
             auto l = lexer->Get();
             dict.emplace_back(std::move(l.text));
         }
+        if (dict.size() == 0) {
+            return symbols["none"];
+        }
+        if (dict.size() == 1 && dict[0].size() == 0) {
+            return symbols["empty"];
+        }
         return graph->NewDict(std::move(dict));
     }
 
@@ -220,7 +252,7 @@ public:
                     lexer->Skip();
                     nodes.emplace_back(EXPR, std::move(res));
                 } else {
-                    error = "Unbalanced braces";
+                    error = "unbalanced braces";
                     return Graph::Ref();
                 }
                 break;
@@ -284,6 +316,9 @@ public:
                 lexer->Skip();
                 nodes.back().second = graph->NewDisjunct(symbols["empty"], nodes.back().second);
                 break;
+            case Lexer::Token::ERROR:
+                error = "invalid token";
+                return Graph::Ref();
             default:
                 cont = false;
             }
