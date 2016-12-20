@@ -11,6 +11,27 @@
 #include <set>
 #include <map>
 
+template <typename T>
+class ComparablePointer {
+    const T* ptr;
+public:
+    ComparablePointer(const T* ptr_) : ptr(ptr_) {}
+    const T& operator*() const { return *ptr; }
+    const T* operator->() const { return ptr; }
+
+    ComparablePointer& operator=(const T* ptr_) { ptr = ptr_; return *this; }
+
+    friend bool operator==(const ComparablePointer& x, const ComparablePointer& y) { return *x == *y; }
+    friend bool operator!=(const ComparablePointer& x, const ComparablePointer& y) { return *x != *y; }
+    friend bool operator<(const ComparablePointer& x, const ComparablePointer& y) { return *x < *y; }
+    friend bool operator>(const ComparablePointer& x, const ComparablePointer& y) { return *x > *y; }
+    friend bool operator<=(const ComparablePointer& x, const ComparablePointer& y) { return *x <= *y; }
+    friend bool operator>=(const ComparablePointer& x, const ComparablePointer& y) { return *x >= *y; }
+};
+
+template <typename T>
+ComparablePointer<T> MakeComparable(const T* x) { return ComparablePointer<T>(x); }
+
 class Expander {
     const Graph* graph;
     ExpGraph* expgraph;
@@ -36,7 +57,8 @@ class Expander {
         Key(size_t len_, const Graph::Node* ref_, size_t offset_ = 0) : len(len_), offset(offset_), ref(ref_) {}
     };
 
-    ExpGraph::Ref empty;
+    std::map<ComparablePointer<std::set<std::string>>, ExpGraph::Ref> dictmap;
+    std::map<std::pair<ExpGraph::Node::NodeType, ComparablePointer<std::vector<ExpGraph::Ref>>>, ExpGraph::Ref> nodemap;
 
     struct Thunk;
     typedef rclist<Thunk>::fixed_iterator ThunkRef;

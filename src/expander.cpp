@@ -1,4 +1,5 @@
 #include "expander.h"
+#include <algorithm>
 
 void Expander::AddDep(const Key& key, const ThunkRef& parent) {
     auto it = thunkmap.find(key);
@@ -36,32 +37,32 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
             ref->done = true;
             break;
         case Graph::Node::NodeType::EMPTY:
-//            fprintf(stderr, "    empty\n");
-            ref->done = true;
-            if (ref->key.len == 0) {
-                if (!empty) {
-                    empty = expgraph->NewDict({""});
-                    assert(empty->len == 0);
-                }
-                ref->result = empty;
-            }
-            break;
         case Graph::Node::NodeType::DICT: {
             std::set<std::string> vec;
-            for (const auto& str : ref->key.ref->dict) {
-                if (str.size() == ref->key.len) {
-                    if (vec.count(str)) {
-                        error = "duplicate string '" + str + "'";
-                        return false;
+            if (ref->key.ref->nodetype == Graph::Node::NodeType::EMPTY && ref->key.len == 0) {
+                vec.insert("");
+            } else {
+                for (const auto& str : ref->key.ref->dict) {
+                    if (str.size() == ref->key.len) {
+                        if (vec.count(str)) {
+                            error = "duplicate string '" + str + "'";
+                            return false;
+                        }
+                        vec.insert(str);
                     }
-                    vec.insert(str);
                 }
             }
             ref->done = true;
 //            fprintf(stderr, "    dict vec=%i/%i\n", (int)vec.size(), (int)ref->key.ref->dict.size());
             if (vec.size() > 0) {
-                ref->result = expgraph->NewDict(std::move(vec));
-                assert(ref->result->len == (int)ref->key.len);
+                auto fnd = dictmap.find(MakeComparable(&vec));
+                if (fnd != dictmap.end()) {
+                    ref->result = fnd->second;
+                } else {
+                    ref->result = expgraph->NewDict(std::move(vec));
+                    assert(ref->result->len == (int)ref->key.len);
+                    dictmap.emplace(MakeComparable(&ref->result->dict), ref->result);
+                }
             }
             break;
         }
@@ -149,7 +150,16 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
             ref->done = true;
 //            fprintf(stderr, "    disjunction: done %i/%i\n", (int)refs.size(), (int)ref->deps.size());
             if (!refs.empty()) {
-                ref->result = expgraph->NewDisjunct(std::move(refs));
+                std::pair<ExpGraph::Node::NodeType, ComparablePointer<std::vector<ExpGraph::Ref>>> key(ExpGraph::Node::NodeType::DISJUNCT, MakeComparable(&refs));
+                std::sort(refs.begin(), refs.end());
+                auto fnd = nodemap.find(key);
+                if (fnd != nodemap.end()) {
+                    ref->result = fnd->second;
+                } else {
+                    ref->result = expgraph->NewDisjunct(std::move(refs));
+                    key.second = &ref->result->refs;
+                    nodemap.emplace(key, ref->result);
+                }
             }
             break;
         }
@@ -177,11 +187,16 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                 break;
             }
             ref->done = true;
-            if (none || refs.empty()) {
-//                fprintf(stderr, "    concatenation: none\n");
-            } else {
-//                fprintf(stderr, "    concatenation: done %i/%i\n", (int)refs.size(), (int)ref->deps.size());
-                ref->result = expgraph->NewConcat(std::move(refs));
+            if (!none && !refs.empty()) {
+                std::pair<ExpGraph::Node::NodeType, ComparablePointer<std::vector<ExpGraph::Ref>>> key(ExpGraph::Node::NodeType::CONCAT, MakeComparable(&refs));
+                auto fnd = nodemap.find(key);
+                if (fnd != nodemap.end()) {
+                    ref->result = fnd->second;
+                } else {
+                    ref->result = expgraph->NewConcat(std::move(refs));
+                    key.second = &ref->result->refs;
+                    nodemap.emplace(key, ref->result);
+                }
             }
             break;
         }
