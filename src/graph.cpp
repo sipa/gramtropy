@@ -25,13 +25,20 @@ namespace {
         return false;
     }
 
-    static void CollapseDisjunct(Graph* graph, const Graph::Ref& node, std::vector<std::string>& dict, std::vector<Graph::Ref>& refs) {
+    static bool CollapseDisjunct(Graph* graph, const Graph::Ref& node, std::vector<std::string>& dict, std::vector<Graph::Ref>& refs) {
         assert(node->nodetype == Graph::Node::DISJUNCT);
+        bool modified = false;
         for (Graph::Ref& ref : node->refs) {
-            if (ref->nodetype == Graph::Node::NONE) continue;
-            if (ref->nodetype == Graph::Node::DISJUNCT && ref.unique()) {
+            bool modify = true;
+            if (ref->nodetype == Graph::Node::NONE) {
+                // Nothing to do.
+            } else if (ref->nodetype == Graph::Node::DISJUNCT && ref.unique()) {
                 CollapseDisjunct(graph, ref, dict, refs);
             } else if (ref->nodetype == Graph::Node::DICT && ref.unique()) {
+                if (dict.empty()) {
+                    // The first dict being included - not necessarily a modification.
+                    modify = false;
+                }
                 if (dict.size() < ref->dict.size()) {
                     dict.swap(ref->dict);
                 }
@@ -41,53 +48,53 @@ namespace {
             } else if (ref->nodetype == Graph::Node::CONCAT && ref->refs.size() == 1) {
                 refs.emplace_back(ref->refs[0]);
             } else {
+                modify = false;
                 refs.emplace_back(std::move(ref));
             }
+            modified |= modify;
         }
+        return modified;
     }
 
-    static void CollapseConcat(Graph* graph, const Graph::Ref& node, std::vector<Graph::Ref>& refs) {
+    static bool CollapseConcat(Graph* graph, const Graph::Ref& node, std::vector<Graph::Ref>& refs) {
         assert(node->nodetype == Graph::Node::CONCAT);
+        bool modified = false;
         for (Graph::Ref& ref : node->refs) {
-            if (ref->nodetype == Graph::Node::EMPTY) continue;
-            if (ref->nodetype == Graph::Node::CONCAT && ref.unique()) {
+            bool modify = true;
+            if (ref->nodetype == Graph::Node::EMPTY) {
+                // Nothing to do.
+            } else if (ref->nodetype == Graph::Node::CONCAT && ref.unique()) {
                 CollapseConcat(graph, ref, refs);
             } else if (ref->nodetype == Graph::Node::DISJUNCT && ref->refs.size() == 1) {
                 refs.emplace_back(ref->refs[0]);
+            } else if (!refs.empty() && ref->nodetype == Graph::Node::DICT && refs.back()->nodetype == Graph::Node::DICT && ref.unique() && refs.back().unique() && (ref->dict.size() == 1 || refs.back()->dict.size() == 1)) {
+                std::vector<std::string> strs;
+                for (const auto& str1 : refs.back()->dict) {
+                    for (const auto& str2 : ref->dict) {
+                        strs.emplace_back(str1 + str2);
+                    }
+                }
+                refs.back()->dict = std::move(strs);
+                ref = Graph::Ref();
             } else {
+                modify = false;
                 refs.emplace_back(std::move(ref));
             }
+            modified |= modify;
         }
+        return modified;
     }
 
     static bool OptimizeDisjunct(Graph* graph, const Graph::Ref& node) {
         assert(node->nodetype == Graph::Node::DISJUNCT);
-        int nones = 0;
-        int dicts = 0;
-        int inlines = 0;
-        int others = 0;
-        for (const Graph::Ref& ref : node->refs) {
-            if (ref->nodetype == Graph::Node::NONE) {
-                nones++;
-            } else if (ref->nodetype == Graph::Node::DISJUNCT && ref.unique()) {
-                inlines++;
-            } else if (ref->nodetype == Graph::Node::DICT && ref.unique()) {
-                dicts++;
-            } else {
-                others++;
-            }
-        }
-        if (dicts == 0 && inlines == 0 && others == 0) {
-            node->nodetype = Graph::Node::NONE;
-            node->refs.clear();
-            return true;
-        }
-        if (nones == 0 && inlines == 0 && !(dicts == 0 && others == 1) && !(others == 0)) {
-            return false;
-        }
         std::vector<Graph::Ref> refs;
         std::vector<std::string> dict;
-        CollapseDisjunct(graph, node, dict, refs);
+        bool modified = CollapseDisjunct(graph, node, dict, refs);
+        if (dict.size() == 0 && refs.size() == 0) {
+            node->refs.clear();
+            node->nodetype = Graph::Node::EMPTY;
+            return true;
+        }
         if (dict.size() == 0 && refs.size() == 1 && refs[0].unique()) {
             node->refs = std::move(refs[0]->refs);
             node->dict = std::move(refs[0]->dict);
@@ -106,36 +113,21 @@ namespace {
             newdict->dict = std::move(dict);
             OptimizeDict(graph, newdict);
             node->refs.emplace_back(std::move(newdict));
-            return true;
         }
-        return inlines != 0;
+        return modified;
     }
 
     static bool OptimizeConcat(Graph* graph, const Graph::Ref& node) {
         assert(node->nodetype == Graph::Node::CONCAT);
-        int empties = 0;
-        int inlines = 0;
-        int others = 0;
         for (const Graph::Ref& ref : node->refs) {
             if (ref->nodetype == Graph::Node::NONE) {
                 node->nodetype = Graph::Node::NONE;
                 node->refs.clear();
                 return true;
-            } else if (ref->nodetype == Graph::Node::EMPTY) {
-                empties++;
-            } else if (ref->nodetype == Graph::Node::CONCAT && ref.unique()) {
-                inlines++;
-            } else {
-                others++;
             }
         }
-        if (inlines == 0 && others == 0) {
-            node->nodetype = Graph::Node::EMPTY;
-            node->refs.clear();
-            return true;
-        }
         std::vector<Graph::Ref> refs;
-        CollapseConcat(graph, node, refs);
+        bool modified = CollapseConcat(graph, node, refs);
         node->refs.clear();
         if (refs.size() == 1 && refs[0].unique()) {
             node->refs = std::move(refs[0]->refs);
@@ -148,7 +140,7 @@ namespace {
             node->nodetype = Graph::Node::EMPTY;
             return true;
         }
-        return inlines != 0;
+        return modified;
     }
 
     static bool Optimize(Graph* graph, const Graph::Ref& node) {
