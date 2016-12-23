@@ -129,6 +129,17 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
             AddDep(key, ref);
             break;
         }
+        case Graph::Node::NodeType::LENLIMIT: {
+            assert(ref->key.ref->refs.size() == 1);
+            if (ref->key.len < ref->key.ref->par1 || ref->key.len > ref->key.ref->par2) {
+                ref->done = true;
+                break;
+            }
+            ref->nodetype = Thunk::ThunkType::COPY;
+            Key key(ref->key.len, ref->key.ref->refs[0]);
+            AddDep(key, ref);
+            break;
+        }
         default:
             assert(!"Unhandled graph type");
         }
@@ -228,6 +239,18 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                 ref->deps[0]->result = sub;
             }
             ref->result = std::move(sub);
+            break;
+        }
+        case Thunk::ThunkType::COPY: {
+            assert(ref->deps.size() == 1);
+            if (!ref->deps[0]->done) {
+                break;
+            }
+            ref->done = true;
+            if (!ref->deps[0]->result) {
+                break;
+            }
+            ref->result = ref->deps[0]->result;
             break;
         }
         default:

@@ -3,6 +3,7 @@
 #include "export.h"
 #include <map>
 #include <math.h>
+#include <limits>
 
 namespace {
 
@@ -14,6 +15,7 @@ public:
             ERROR,
             SYMBOL,
             STRING,
+            INTEGER,
             REGEXP,
             OPEN_BRACE,
             CLOSE_BRACE,
@@ -23,6 +25,7 @@ public:
             EQUALS,
             PIPE,
             SEMICOLON,
+            COMMA,
             END
         };
         TokenType tokentype;
@@ -78,6 +81,14 @@ public:
             } while(true);
             return Token(Token::SYMBOL, std::string(bit, it));
         }
+        if (*it >= '0' && *it <= '9') {
+            auto bit = it;
+            ++it;
+            while (it != itend && *it >= '0' && *it <= '9') {
+                ++it;
+            }
+            return Token(Token::INTEGER, std::string(bit, it));
+        }
         switch (*it) {
         case '(':
             ++it;
@@ -103,6 +114,9 @@ public:
         case ';':
             ++it;
             return Token(Token::SEMICOLON);
+        case ',':
+            ++it;
+            return Token(Token::COMMA);
         case '/': {
             bool escaped = false;
             ++it;
@@ -277,6 +291,33 @@ public:
                     }
                     lexer->Skip();
                     nodes.emplace_back(EXPR, std::move(res));
+                } else if ((tok.text == "min_length" || tok.text == "max_length") && lexer->PeekType() == Lexer::Token::OPEN_BRACE) {
+                    lexer->Skip();
+                    if (lexer->PeekType() != Lexer::Token::INTEGER) {
+                        error = "integer expected";
+                        return Graph::Ref();
+                    }
+                    auto num = lexer->Get();
+                    if (lexer->PeekType() != Lexer::Token::COMMA) {
+                        error = "comma expected";
+                        return Graph::Ref();
+                    }
+                    lexer->Skip();
+                    auto expr = ParseExpression();
+                    if (!expr.defined()) {
+                        return Graph::Ref();
+                    }
+                    if (lexer->PeekType() != Lexer::Token::CLOSE_BRACE) {
+                        error = "closing brace expected";
+                        return Graph::Ref();
+                    }
+                    lexer->Skip();
+                    size_t val = strtoul(num.text.c_str(), NULL, 10);
+                    if (tok.text == "min_length") {
+                        nodes.emplace_back(EXPR, graph->NewLengthLimit(std::move(expr), val, 1000000));
+                    } else {
+                        nodes.emplace_back(EXPR, graph->NewLengthLimit(std::move(expr), 0, val));
+                    }
                 } else {
                     nodes.emplace_back(EXPR, ParseSymbol(std::move(tok.text)));
                 }

@@ -74,6 +74,7 @@ class Expander {
             CONCAT,
             DISJUNCT,
             DEDUP,
+            COPY,
         };
 
         bool need_expansion;

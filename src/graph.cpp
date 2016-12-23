@@ -13,6 +13,7 @@ static bool OptimizeRefInternal(Graph* graph, Graph::Ref& node) {
 
 static bool OptimizeDict(Graph* graph, const Graph::Ref& node) {
     assert(node->nodetype == Graph::Node::DICT);
+    assert(node->refs.size() == 0);
     if (node->dict.empty()) {
         node->nodetype = Graph::Node::NONE;
         return true;
@@ -58,6 +59,7 @@ static bool CollapseDisjunct(Graph* graph, const Graph::Ref& node, std::vector<s
 
 static bool CollapseConcat(Graph* graph, const Graph::Ref& node, std::vector<Graph::Ref>& refs) {
     assert(node->nodetype == Graph::Node::CONCAT);
+    assert(node->dict.size() == 0);
     bool modified = false;
     for (Graph::Ref& ref : node->refs) {
         bool modify = true;
@@ -87,6 +89,7 @@ static bool CollapseConcat(Graph* graph, const Graph::Ref& node, std::vector<Gra
 
 static bool OptimizeDisjunct(Graph* graph, const Graph::Ref& node) {
     assert(node->nodetype == Graph::Node::DISJUNCT);
+    assert(node->dict.size() == 0);
     std::vector<Graph::Ref> refs;
     std::vector<std::string> dict;
     bool modified = CollapseDisjunct(graph, node, dict, refs);
@@ -96,9 +99,7 @@ static bool OptimizeDisjunct(Graph* graph, const Graph::Ref& node) {
         return true;
     }
     if (dict.size() == 0 && refs.size() == 1 && refs[0].unique()) {
-        node->refs = std::move(refs[0]->refs);
-        node->dict = std::move(refs[0]->dict);
-        node->nodetype = refs[0]->nodetype;
+        *node = std::move(*refs[0]);
         return true;
     }
     node->refs = std::move(refs);
@@ -119,6 +120,7 @@ static bool OptimizeDisjunct(Graph* graph, const Graph::Ref& node) {
 
 static bool OptimizeConcat(Graph* graph, const Graph::Ref& node) {
     assert(node->nodetype == Graph::Node::CONCAT);
+    assert(node->dict.size() == 0);
     for (const Graph::Ref& ref : node->refs) {
         if (ref->nodetype == Graph::Node::NONE) {
             node->nodetype = Graph::Node::NONE;
@@ -130,9 +132,7 @@ static bool OptimizeConcat(Graph* graph, const Graph::Ref& node) {
     bool modified = CollapseConcat(graph, node, refs);
     node->refs.clear();
     if (refs.size() == 1 && refs[0].unique()) {
-        node->refs = std::move(refs[0]->refs);
-        node->dict = std::move(refs[0]->dict);
-        node->nodetype = refs[0]->nodetype;
+        *node = std::move(*refs[0]);
         return true;
     }
     node->refs = std::move(refs);
@@ -143,8 +143,39 @@ static bool OptimizeConcat(Graph* graph, const Graph::Ref& node) {
     return modified;
 }
 
+static bool OptimizeLengthLimit(Graph* graph, const Graph::Ref& node) {
+    bool modified = false;
+    assert(node->nodetype == Graph::Node::LENLIMIT);
+    assert(node->refs.size() == 1);
+    assert(node->dict.size() == 0);
+    while (node->refs[0].unique() && node->refs[0]->nodetype == Graph::Node::LENLIMIT) {
+        assert(node->refs[0]->refs.size() == 1);
+        assert(node->refs[0]->dict.size() == 1);
+        node->par1 = std::max(node->par1, node->refs[0]->par1);
+        node->par2 = std::min(node->par2, node->refs[0]->par2);
+        node->refs[0] = std::move(node->refs[0]->refs[0]);
+        modified = true;
+    }
+    if (node->refs[0].unique() && node->refs[0]->nodetype == Graph::Node::DICT) {
+        std::vector<std::string> dict;
+        for (auto& str : node->refs[0]->dict) {
+            if (str.size() >= node->par1 && str.size() <= node->par2) {
+                dict.emplace_back(std::move(str));
+            }
+        }
+        node->refs.clear();
+        node->dict = std::move(dict);
+        node->nodetype = Graph::Node::DICT;
+        modified = true;
+    }
+    return modified;
+}
+
 static bool Optimize(Graph* graph, const Graph::Ref& node) {
     bool ret = false;
+    if (node->nodetype == Graph::Node::LENLIMIT) {
+        ret |= OptimizeLengthLimit(graph, node);
+    }
     if (node->nodetype == Graph::Node::DISJUNCT) {
         ret |= OptimizeDisjunct(graph, node);
     }
@@ -184,9 +215,7 @@ Graph::Ref Graph::NewUndefined() {
 void Graph::Define(const Graph::Ref& undef, Graph::Ref&& definition) {
     assert(undef->nodetype == Graph::Node::UNDEF);
     if (definition.unique()) {
-        undef->nodetype = definition->nodetype;
-        undef->refs = std::move(definition->refs);
-        undef->dict = std::move(definition->dict);
+        *undef = std::move(*definition);
         definition = Graph::Ref();
     } else {
         undef->nodetype = Graph::Node::DISJUNCT;
@@ -225,6 +254,15 @@ Graph::Ref Graph::NewDedup(Graph::Ref&& ref) {
         ret = NewNode(Graph::Node::DEDUP);
         ret->refs = {std::move(ref)};
     }
+    return ret;
+}
+
+Graph::Ref Graph::NewLengthLimit(Graph::Ref&& ref, size_t minlen, size_t maxlen) {
+    Graph::Ref ret = NewNode(Graph::Node::LENLIMIT);
+    ret->par1 = minlen;
+    ret->par2 = maxlen;
+    ret->refs = {std::move(ref)};
+    Optimize(this, ret);
     return ret;
 }
 

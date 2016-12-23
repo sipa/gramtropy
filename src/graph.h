@@ -22,11 +22,13 @@ class GraphNode {
         CONCAT,
         DISJUNCT,
         DEDUP,
+        LENLIMIT,
     };
 
-    GraphNode(NodeType typ) : nodetype(typ) {}
+    GraphNode(NodeType typ) : nodetype(typ), par1(0), par2(0) {}
 
     NodeType nodetype;
+    size_t par1, par2;
     std::vector<std::string> dict;
     std::vector<rclist<GraphNode>::fixed_iterator> refs;
 };
@@ -45,6 +47,7 @@ public:
     Ref NewConcat(std::vector<Ref>&& refs);
     Ref NewDisjunct(std::vector<Ref>&& refs);
     Ref NewDedup(Ref&& ref);
+    Ref NewLengthLimit(Ref&& ref, size_t min, size_t max);
 
     template<typename S>
     Ref NewString(S&& str) {
