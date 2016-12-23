@@ -110,7 +110,7 @@ bool Optimize(const ExpGraph::Ref& ref) {
     case ExpGraph::Node::NodeType::DICT:
         break;
     case ExpGraph::Node::NodeType::DISJUNCT:
-        if (ref->count.bits() <= 13) {
+        if (ref->count.bits() <= 6) {
             auto x = InlineDict(ref);
             std::set<std::string> dict;
             assert(ref->count.get_ui() == x.size());
