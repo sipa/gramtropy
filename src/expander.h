@@ -42,19 +42,23 @@ class Expander {
     struct Key {
         size_t len;
         size_t offset;
+        size_t cutoff;
         const Graph::Node* ref;
 
         friend bool operator==(const Key& x, const Key& y) {
-            return x.len == y.len && x.offset == y.offset && x.ref == y.ref;
+            return x.len == y.len && x.offset == y.offset && x.cutoff == y.cutoff && x.ref == y.ref;
         }
 
         friend bool operator<(const Key& x, const Key& y) {
-            return x.len < y.len || (x.len == y.len && ((x.offset == y.offset && x.ref < y.ref) || x.offset < y.offset));
+            if (x.len != y.len) return x.len < y.len;
+            if (x.cutoff != y.cutoff) return x.cutoff < y.cutoff;
+            if (x.offset != y.offset) return x.offset < y.offset;
+            return x.ref < y.ref;
         }
 
-        Key() : len(0), offset(0), ref(nullptr) {}
-        Key(size_t len_, const Graph::Ref& ref_, size_t offset_ = 0) : len(len_), offset(offset_), ref(&*ref_) {}
-        Key(size_t len_, const Graph::Node* ref_, size_t offset_ = 0) : len(len_), offset(offset_), ref(ref_) {}
+        Key() : len(0), offset(0), cutoff(0), ref(nullptr) {}
+        Key(size_t len_, const Graph::Ref& ref_, size_t offset_ = 0, size_t cutoff_ = 0) : len(len_), offset(offset_), cutoff(cutoff_), ref(&*ref_) {}
+        Key(size_t len_, const Graph::Node* ref_, size_t offset_ = 0, size_t cutoff_ = 0) : len(len_), offset(offset_), cutoff(cutoff_), ref(ref_) {}
     };
 
     std::map<ComparablePointer<std::set<std::string>>, ExpGraph::Ref> dictmap;

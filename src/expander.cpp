@@ -82,13 +82,19 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
 //            fprintf(stderr, "    concat n=%i\n", (int)ref->key.ref->refs.size());
             ref->nodetype = Thunk::ThunkType::DISJUNCT;
             for (size_t s = 0; s <= ref->key.len; s++) {
-                Key key1(s, ref->key.ref->refs[ref->key.offset]);
-                Key key2;
-                if (ref->key.ref->refs.size() == 2 + ref->key.offset) {
-                    key2 = Key(ref->key.len - s, ref->key.ref->refs[ref->key.offset + 1]);
-                } else {
-                    key2 = Key(ref->key.len - s, ref->key.ref, ref->key.offset + 1);
+                // Bisect the list of concatenation elements.
+                size_t total = ref->key.ref->refs.size();
+                size_t mid = (ref->key.offset + total - ref->key.cutoff + 1) / 2;
+                Key key1(s, ref->key.ref, ref->key.offset, total - mid);
+                Key key2(ref->key.len - s, ref->key.ref, mid, ref->key.cutoff);
+                // If either of the two halves result in a single node, descend into it instead.
+                if (total == key1.offset + key1.cutoff + 1) {
+                    key1 = Key(s, ref->key.ref->refs[key1.offset]);
                 }
+                if (total == key2.offset + key2.cutoff + 1) {
+                    key2 = Key(ref->key.len - s, ref->key.ref->refs[key2.offset]);
+                }
+                // Check if we already know to have no solutions for any of the two sides.
                 auto fnd1 = thunkmap.find(key1), fnd2 = thunkmap.find(key2);
                 if (fnd1 != thunkmap.end() && fnd1->second->done && !fnd1->second->result) {
                     continue;
@@ -96,6 +102,7 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                 if (fnd2 != thunkmap.end() && fnd2->second->done && !fnd2->second->result) {
                     continue;
                 }
+                // Create thunk for the concatenation of the two halves.
                 auto sub = thunks.emplace_back();
                 ref->deps.push_back(sub);
                 sub->forward.insert(ref);
@@ -104,6 +111,7 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                     AddDep(key1, sub);
                     AddDep(key2, sub);
                 } else {
+                    // Make sure the shorter length is expanded first.
                     AddDep(key2, sub);
                     AddDep(key1, sub);
                     sub->deps[0].swap(sub->deps[1]);
