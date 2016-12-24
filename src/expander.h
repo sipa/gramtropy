@@ -63,6 +63,12 @@ class Expander {
 
     std::map<ComparablePointer<std::set<std::string>>, ExpGraph::Ref> dictmap;
     std::map<std::pair<ExpGraph::Node::NodeType, ComparablePointer<std::vector<ExpGraph::Ref>>>, ExpGraph::Ref> nodemap;
+    std::map<std::set<std::string>, ExpGraph::Ref> edictmap;
+
+    ExpGraph::Ref MakeNonDict(std::vector<ExpGraph::Ref>&& refs, ExpGraph::Node::NodeType nodetype, bool sort);
+    ExpGraph::Ref MakeConcat(std::vector<ExpGraph::Ref>&& refs);
+    ExpGraph::Ref MakeDisjunct(std::vector<ExpGraph::Ref>&& refs);
+    ExpGraph::Ref MakeDict(std::set<std::string>&& refs);
 
     struct Thunk;
     typedef rclist<Thunk>::fixed_iterator ThunkRef;

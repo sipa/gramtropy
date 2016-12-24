@@ -93,11 +93,6 @@ static bool OptimizeDisjunct(Graph* graph, const Graph::Ref& node) {
     std::vector<Graph::Ref> refs;
     std::vector<std::string> dict;
     bool modified = CollapseDisjunct(graph, node, dict, refs);
-    if (dict.size() == 0 && refs.size() == 0) {
-        node->refs.clear();
-        node->nodetype = Graph::Node::EMPTY;
-        return true;
-    }
     if (dict.size() == 0 && refs.size() == 1 && refs[0].unique()) {
         *node = std::move(*refs[0]);
         return true;

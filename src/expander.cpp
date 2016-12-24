@@ -1,6 +1,61 @@
 #include "expander.h"
 #include <algorithm>
 
+ExpGraph::Ref Expander::MakeNonDict(std::vector<ExpGraph::Ref>&& refs, ExpGraph::Node::NodeType nodetype, bool sort) {
+    if (sort) {
+        std::sort(refs.begin(), refs.end());
+    }
+    std::pair<ExpGraph::Node::NodeType, ComparablePointer<std::vector<ExpGraph::Ref>>> key(nodetype, MakeComparable(&refs));
+    auto fnd = nodemap.find(key);
+    if (fnd != nodemap.end()) {
+        return fnd->second;
+    }
+    ExpGraph::Ref ret;
+    switch (nodetype) {
+    case ExpGraph::Node::NodeType::CONCAT:
+        ret = expgraph->NewConcat(std::move(refs));
+        break;
+    case ExpGraph::Node::NodeType::DISJUNCT:
+        ret = expgraph->NewDisjunct(std::move(refs));
+        break;
+    default:
+        assert(!"Unknown type");
+    }
+    if (ret->nodetype == nodetype) {
+        key.second = &ret->refs;
+        nodemap.emplace(std::move(key), ret);
+    }
+    return ret;
+}
+
+ExpGraph::Ref Expander::MakeDict(std::set<std::string>&& dict) {
+    if (dict.size() == 0) {
+        return ExpGraph::Ref();
+    }
+    auto fnd = dictmap.find(MakeComparable(&dict));
+    if (fnd != dictmap.end()) {
+        return fnd->second;
+    }
+    auto ret = expgraph->NewDict(std::move(dict));
+    dictmap.emplace(MakeComparable(&ret->dict), ret);
+    return ret;
+}
+
+ExpGraph::Ref Expander::MakeDisjunct(std::vector<ExpGraph::Ref>&& refs) {
+    if (refs.size() == 0) {
+        return ExpGraph::Ref();
+    }
+    return MakeNonDict(std::move(refs), ExpGraph::Node::NodeType::DISJUNCT, true);
+}
+
+ExpGraph::Ref Expander::MakeConcat(std::vector<ExpGraph::Ref>&& refs) {
+    if (refs.size() == 0) {
+        return MakeDict({""});
+//        return ExpGraph::Ref();
+    }
+    return MakeNonDict(std::move(refs), ExpGraph::Node::NodeType::CONCAT, false);
+}
+
 void Expander::AddDep(const Key& key, const ThunkRef& parent) {
     auto it = thunkmap.find(key);
     ThunkRef res;
@@ -53,17 +108,7 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                 }
             }
             ref->done = true;
-//            fprintf(stderr, "    dict vec=%i/%i\n", (int)vec.size(), (int)ref->key.ref->dict.size());
-            if (vec.size() > 0) {
-                auto fnd = dictmap.find(MakeComparable(&vec));
-                if (fnd != dictmap.end()) {
-                    ref->result = fnd->second;
-                } else {
-                    ref->result = expgraph->NewDict(std::move(vec));
-                    assert(ref->result->len == (int)ref->key.len);
-                    dictmap.emplace(MakeComparable(&ref->result->dict), ref->result);
-                }
-            }
+            ref->result = MakeDict(std::move(vec));
             break;
         }
         case Graph::Node::NodeType::DISJUNCT:
@@ -167,19 +212,7 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                 break;
             }
             ref->done = true;
-//            fprintf(stderr, "    disjunction: done %i/%i\n", (int)refs.size(), (int)ref->deps.size());
-            if (!refs.empty()) {
-                std::pair<ExpGraph::Node::NodeType, ComparablePointer<std::vector<ExpGraph::Ref>>> key(ExpGraph::Node::NodeType::DISJUNCT, MakeComparable(&refs));
-                std::sort(refs.begin(), refs.end());
-                auto fnd = nodemap.find(key);
-                if (fnd != nodemap.end()) {
-                    ref->result = fnd->second;
-                } else {
-                    ref->result = expgraph->NewDisjunct(std::move(refs));
-                    key.second = &ref->result->refs;
-                    nodemap.emplace(key, ref->result);
-                }
-            }
+            ref->result = MakeDisjunct(std::move(refs));
             break;
         }
         case Thunk::ThunkType::CONCAT: {
@@ -206,16 +239,8 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                 break;
             }
             ref->done = true;
-            if (!none && !refs.empty()) {
-                std::pair<ExpGraph::Node::NodeType, ComparablePointer<std::vector<ExpGraph::Ref>>> key(ExpGraph::Node::NodeType::CONCAT, MakeComparable(&refs));
-                auto fnd = nodemap.find(key);
-                if (fnd != nodemap.end()) {
-                    ref->result = fnd->second;
-                } else {
-                    ref->result = expgraph->NewConcat(std::move(refs));
-                    key.second = &ref->result->refs;
-                    nodemap.emplace(key, ref->result);
-                }
+            if (!none) {
+                ref->result = MakeConcat(std::move(refs));
             }
             break;
         }
@@ -233,7 +258,7 @@ bool Expander::ProcessThunk(ThunkRef ref, std::string& error) {
                 return false;
             }
             auto inl = Inline(ref->deps[0]->result);
-            auto sub = expgraph->NewDict(std::move(inl));
+            auto sub = MakeDict(std::move(inl));
             if (sub->count == ref->deps[0]->result->count) {
                 // Optimization: replace argument with expanded dictionary if there are no duplicates.
                 ref->deps[0]->result = sub;
