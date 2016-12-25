@@ -110,22 +110,6 @@ bool Optimize(const ExpGraph::Ref& ref) {
     case ExpGraph::Node::NodeType::DICT:
         break;
     case ExpGraph::Node::NodeType::DISJUNCT:
-        if (ref->count.bits() <= 6) {
-            auto x = InlineDict(ref);
-            std::set<std::string> dict;
-            assert(ref->count.get_ui() == x.size());
-            for (auto& str : x) {
-                if (dict.count(str)) {
-                    fprintf(stderr, "Duplicate expansion for %s\n", str.c_str());
-                } else {
-                    dict.emplace(std::move(str));
-                }
-            }
-            ref->dict = std::move(dict);
-            ref->nodetype = ExpGraph::Node::NodeType::DICT;
-            ref->refs.clear();
-            return true;
-        }
     case ExpGraph::Node::NodeType::CONCAT:
         if (Collectable(ref->nodetype, ref->refs)) {
             std::vector<ExpGraph::Ref> result;

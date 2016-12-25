@@ -45,13 +45,17 @@ ExpGraph::Ref Expander::MakeDisjunct(std::vector<ExpGraph::Ref>&& refs) {
     if (refs.size() == 0) {
         return ExpGraph::Ref();
     }
-    return MakeNonDict(std::move(refs), ExpGraph::Node::NodeType::DISJUNCT, true);
+    auto ret = MakeNonDict(std::move(refs), ExpGraph::Node::NodeType::DISJUNCT, true);
+    if (ret->count.bits() <= 6) {
+        auto inl = Inline(ret);
+        return MakeDict(std::move(inl));
+    }
+    return ret;
 }
 
 ExpGraph::Ref Expander::MakeConcat(std::vector<ExpGraph::Ref>&& refs) {
     if (refs.size() == 0) {
         return MakeDict({""});
-//        return ExpGraph::Ref();
     }
     return MakeNonDict(std::move(refs), ExpGraph::Node::NodeType::CONCAT, false);
 }
