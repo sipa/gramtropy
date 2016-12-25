@@ -234,6 +234,8 @@ private:
     Graph* graph;
     std::string error;
 
+    Graph::Ref regexp_d;
+
 public:
     std::map<std::string, Graph::Ref> symbols;
 
@@ -265,6 +267,139 @@ public:
         return it->second;
     }
 
+    Graph::Ref ParseRegexpSection(std::string::const_iterator& it, std::string::const_iterator itend) {
+        std::vector<Graph::Ref> disj;
+        std::vector<Graph::Ref> cat;
+        while (it != itend) {
+            char ch = *it;
+            if (ch == ')' || ch == ']') {
+                break;
+            }
+            ++it;
+            switch (ch) {
+            case '|':
+                disj.emplace_back(graph->NewConcat(std::move(cat)));
+                cat.clear();
+                break;
+            case '\\': {
+                char ch2 = *it;
+                ++it;
+                switch (ch2) {
+                case 'n':
+                    cat.emplace_back(graph->NewDict({"\n"}));
+                    break;
+                case 'd':
+                    if (!regexp_d) {
+                        std::vector<std::string> digits;
+                        for (char c = '0'; c <= '9'; ++c) {
+                            digits.emplace_back(1, c);
+                        }
+                        regexp_d = graph->NewDict(std::move(digits));
+                    }
+                    cat.emplace_back(regexp_d);
+                    break;
+                default:
+                    cat.emplace_back(graph->NewDict({{ch}}));
+                    break;
+                }
+                break;
+            }
+            case '(': {
+                auto ret = ParseRegexpSection(it, itend);
+                if (!ret) {
+                    return ret;
+                }
+                if (it == itend || *it != ')') {
+                    error = "')' expected in regexp";
+                    return Graph::Ref();
+                }
+                ++it;
+                cat.emplace_back(std::move(ret));
+                break;
+            }
+            case '[': {
+                std::vector<std::string> opts;
+                char lastchar = 0;
+                bool havelast = false;
+                do {
+                    if (it == itend) {
+                        error = "']' expected in regexp";
+                        return Graph::Ref();
+                    }
+                    char ch2 = *(it++);
+                    if (ch2 == ']') {
+                        break;
+                    }
+                    if (ch2 == '-' && havelast && it != itend && *it != ']') {
+                        char ch3 = *(it++);
+                        while (lastchar != ch3) {
+                            opts.emplace_back(1, ++lastchar);
+                        }
+                        havelast = false;
+                    } else if (ch2 == '\\' && it != itend) {
+                        opts.emplace_back(1, *(it++));
+                        lastchar = '\\';
+                        havelast = true;
+                    } else {
+                        opts.emplace_back(1, ch2);
+                        lastchar = ch2;
+                        havelast = true;
+                    }
+                } while(true);
+                cat.emplace_back(graph->NewDict(std::move(opts)));
+                break;
+            }
+            case '+': {
+                if (cat.empty()) {
+                    error = "'+' unexpected in regexp";
+                    return Graph::Ref();
+                }
+                Graph::Ref n = graph->NewUndefined();
+                graph->Define(n, graph->NewDisjunct(cat.back(), graph->NewConcat(cat.back(), n)));
+                cat.back() = std::move(n);
+                break;
+            }
+            case '*': {
+                if (cat.empty()) {
+                    error = "'*' unexpected in regexp";
+                    return Graph::Ref();
+                }
+                Graph::Ref n = graph->NewUndefined();
+                graph->Define(n, graph->NewDisjunct(symbols["empty"], graph->NewConcat(cat.back(), n)));
+                cat.back() = std::move(n);
+                break;
+            }
+            case '?': {
+                if (cat.empty()) {
+                    error = "'?' unexpected in regexp";
+                    return Graph::Ref();
+                }
+                Graph::Ref n = graph->NewDisjunct(symbols["empty"], std::move(cat.back()));
+                cat.back() = std::move(n);
+                break;
+            }
+            default:
+                cat.emplace_back(graph->NewString(std::string(1, ch)));
+                break;
+            }
+        }
+        disj.emplace_back(graph->NewConcat(std::move(cat)));
+        return graph->NewDisjunct(std::move(disj));
+    }
+
+    Graph::Ref ParseRegexp(const std::string& str) {
+        auto it = str.begin();
+        Graph::Ref ref = ParseRegexpSection(it, str.end());
+        if (!ref) {
+            return ref;
+        }
+        if (it != str.end()) {
+            error = "unbalanced braces in regexp";
+            return Graph::Ref();
+        }
+        return ref;
+    }
+
     Graph::Ref ParseExpression() {
         std::vector<std::pair<NodeType, Graph::Ref>> nodes;
 
@@ -289,6 +424,15 @@ public:
             case Lexer::Token::STRING:
                 nodes.emplace_back(EXPR, graph->NewString(lexer->Get().text));
                 break;
+            case Lexer::Token::REGEXP: {
+                Lexer::Token regexp = lexer->Get();
+                auto res = ParseRegexp(regexp.text);
+                if (!res) {
+                    return Graph::Ref();
+                }
+                nodes.emplace_back(EXPR, std::move(res));
+                break;
+            }
             case Lexer::Token::SYMBOL: {
                 Lexer::Token tok = lexer->Get();
                 if (tok.text == "dedup" && lexer->PeekType() == Lexer::Token::OPEN_BRACE) {
