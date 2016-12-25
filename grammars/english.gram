@@ -27,12 +27,8 @@ c_temperature = dict(hot cold lukewarm scalding blazing frosty icy cool warm);
 v_temperature = none;
 temperature = c_temperature | v_temperature;
 
-digit = dict("0" "1" "2" "3" "4" "5" "6" "7" "8" "9");
-
-c_age = dict(new) | (dict("1" "2" "3" "4" "5" "6" "7" "9") |
-        "1" dict("0" "1" "2" "3" "4" "5" "6" "7" "9") |
-        dict("2" "3" "4" "5" "6" "7" "9") digit) "-year-old";
-v_age = dict(old ancient) | ("8" | "18" | "8" digit) "-year-old";
+c_age = dict(new) | /[1-79]|1[0-79]|[2-79]\d/ "-year-old";
+v_age = dict(old ancient) | /8|18|8\d/ "-year-old";
 age = c_age | v_age;
 
 c_shape = dict(round square rectangular spherical curled cylindrical triangular pyramidal sharp twisted);
@@ -68,16 +64,16 @@ noun_p = c_noun_p | v_noun_p;
 
 adj_x1 = (material _)?;
 adj_x2 = (origin _)? adj_x1;
-adj_x3 = (shape _)? adj_x2;
-adj_x4 = (age _)? adj_x3;
-adj_x5 = (temperature _)? adj_x4;
-adj_x6 = (size _)? adj_x5;
-adj_x7 = (value _)? adj_x6;
+adj_x3 = (color _)? adj_x2;
+adj_x4 = (shape _)? adj_x3;
+adj_x5 = (age _)? adj_x4;
+adj_x6 = (temperature _)? adj_x5;
+adj_x7 = (size _)? adj_x6;
 
-c_adj = c_value _ adj_x6 | c_size _ adj_x5 | c_temperature _ adj_x4 |
-        c_age _ adj_x3 | c_shape _ adj_x2 | c_origin _ adj_x1 | c_material _;
-v_adj = v_value _ adj_x6 | v_size _ adj_x5 | v_temperature _ adj_x4 |
-        v_age _ adj_x3 | v_shape _ adj_x2 | v_origin _ adj_x1 | v_material _;
+c_adj = c_value _ adj_x7 | c_size _ adj_x6 | c_temperature _ adj_x5 |
+        c_age _ adj_x4 | c_shape _ adj_x3 | c_color _ adj_x2 | c_origin _ adj_x1 | c_material _;
+v_adj = v_value _ adj_x7 | v_size _ adj_x6 | v_temperature _ adj_x5 |
+        v_age _ adj_x4 | v_shape _ adj_x3 | v_color _ adj_x2 | v_origin _ adj_x1 | v_material _;
 
 noun = (quantity_c_s _ c_adj | quantity_v_s _ v_adj) noun_s |
        (quantity_c_p _ c_adj | quantity_v_p _ v_adj) noun_p |

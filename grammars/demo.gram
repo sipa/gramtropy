@@ -1,16 +1,27 @@
 # Simple demo grammar that generates words of alternating vowels and consonsants.
 
-# Strings are written between "", and | separates different options.
-vow = "a" | "e" | "i" | "o" | "u";
+# Strings are written between "".
+space = " ";
 
-# Or the more compact dict construction can be used.
-con = dict("b" c d f "g" "h" j k l m n p q r s t v w x "z");
+# For multiple possibilities, dict() can be used.
+vow = dict(a e i o u);
 
-# ? marks an optional symbol, and + repeats something at least once.
-word = vow con? | vow? (con vow)+ con?;
+# Even simple regular expressions are supported.
+con = /[bcdfghj-np-tvwxz]/;
+
+# Two or more symbols separated by spaces are concatenated.
+convow = con vow;
+
+# A symbol can be repeated at least once using '+'.
+convows = convow+;
+
+# A question mark makes the preceding symbol optional.
+# A pipe symbol separates multiple options.
+word = vow con? | vow? convows con?;
 
 # * repeats something zero or more times.
-words = word (" " word)*;
+# Braces are used for grouping.
+words = word (space word)*;
 
 # main indicates the final result.
 main = words;
