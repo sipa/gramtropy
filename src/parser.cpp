@@ -148,15 +148,15 @@ public:
                 if (End()) {
                     return Token(Token::ERROR);
                 }
-                if (Peek() == '/' && !wasescaped) {
-                    Advance();
+                char ch2 = Peek();
+                Advance();
+                if (ch2 == '/' && !wasescaped) {
                     break;
                 }
-                str += Peek();
-                if (Peek() == '\\' && !wasescaped) {
+                str += ch2;
+                if (ch2 == '\\' && !wasescaped) {
                     escaped = true;
                 }
-                Advance();
             }
             return Token(Token::REGEXP, std::move(str));
         }
