@@ -225,11 +225,6 @@ public:
 
 class Parser {
 private:
-    enum NodeType {
-        EXPR,
-        PIPE,
-    };
-
     Lexer* lexer;
     Graph* graph;
     std::string error;
@@ -401,7 +396,8 @@ public:
     }
 
     Graph::Ref ParseExpression() {
-        std::vector<std::pair<NodeType, Graph::Ref>> nodes;
+        std::vector<Graph::Ref> disj;
+        std::vector<Graph::Ref> cat;
 
         bool cont = true;
         while (cont) {
@@ -414,7 +410,7 @@ public:
                 }
                 if (lexer->PeekType() == Lexer::Token::CLOSE_BRACE) {
                     lexer->Skip();
-                    nodes.emplace_back(EXPR, std::move(res));
+                    cat.emplace_back(std::move(res));
                 } else {
                     error = "unbalanced braces";
                     return Graph::Ref();
@@ -422,7 +418,7 @@ public:
                 break;
             }
             case Lexer::Token::STRING:
-                nodes.emplace_back(EXPR, graph->NewString(lexer->Get().text));
+                cat.emplace_back(graph->NewString(lexer->Get().text));
                 break;
             case Lexer::Token::REGEXP: {
                 Lexer::Token regexp = lexer->Get();
@@ -430,7 +426,7 @@ public:
                 if (!res) {
                     return Graph::Ref();
                 }
-                nodes.emplace_back(EXPR, std::move(res));
+                cat.emplace_back(std::move(res));
                 break;
             }
             case Lexer::Token::SYMBOL: {
@@ -440,7 +436,7 @@ public:
                     if (!res.defined()) {
                         return Graph::Ref();
                     }
-                    nodes.emplace_back(EXPR, graph->NewDedup(std::move(res)));
+                    cat.emplace_back(graph->NewDedup(std::move(res)));
                 } else if (tok.text == "dict" && lexer->PeekType() == Lexer::Token::OPEN_BRACE) {
                     lexer->Skip();
                     auto res = ParseDict();
@@ -449,7 +445,7 @@ public:
                         return Graph::Ref();
                     }
                     lexer->Skip();
-                    nodes.emplace_back(EXPR, std::move(res));
+                    cat.emplace_back(std::move(res));
                 } else if ((tok.text == "min_length" || tok.text == "max_length") && lexer->PeekType() == Lexer::Token::OPEN_BRACE) {
                     lexer->Skip();
                     if (lexer->PeekType() != Lexer::Token::INTEGER) {
@@ -473,48 +469,49 @@ public:
                     lexer->Skip();
                     size_t val = strtoul(num.text.c_str(), NULL, 10);
                     if (tok.text == "min_length") {
-                        nodes.emplace_back(EXPR, graph->NewLengthLimit(std::move(expr), val, 1000000));
+                        cat.emplace_back(graph->NewLengthLimit(std::move(expr), val, 1000000));
                     } else {
-                        nodes.emplace_back(EXPR, graph->NewLengthLimit(std::move(expr), 0, val));
+                        cat.emplace_back(graph->NewLengthLimit(std::move(expr), 0, val));
                     }
                 } else {
-                    nodes.emplace_back(EXPR, ParseSymbol(std::move(tok.text)));
+                    cat.emplace_back(ParseSymbol(std::move(tok.text)));
                 }
                 break;
             }
             case Lexer::Token::PIPE:
                 lexer->Skip();
-                nodes.emplace_back(PIPE, symbols["none"]);
+                disj.emplace_back(graph->NewConcat(std::move(cat)));
+                cat.clear();
                 break;
             case Lexer::Token::ASTERISK: {
-                if (nodes.empty() || nodes.back().first != EXPR) {
-                    cont = false;
-                    break;
+                if (cat.empty()) {
+                    error = "'*' unexpected";
+                    return Graph::Ref();
                 }
                 lexer->Skip();
                 Graph::Ref n = graph->NewUndefined();
-                graph->Define(n, graph->NewDisjunct(symbols["empty"], graph->NewConcat(nodes.back().second, n)));
-                nodes.back().second = std::move(n);
+                graph->Define(n, graph->NewDisjunct(symbols["empty"], graph->NewConcat(cat.back(), n)));
+                cat.back() = std::move(n);
                 break;
             }
             case Lexer::Token::PLUS: {
-                if (nodes.empty() || nodes.back().first != EXPR) {
-                    cont = false;
-                    break;
+                if (cat.empty()) {
+                    error = "'+' unexpected";
+                    return Graph::Ref();
                 }
                 lexer->Skip();
                 Graph::Ref n = graph->NewUndefined();
-                graph->Define(n, graph->NewDisjunct(nodes.back().second, graph->NewConcat(nodes.back().second, n)));
-                nodes.back().second = std::move(n);
+                graph->Define(n, graph->NewDisjunct(cat.back(), graph->NewConcat(cat.back(), n)));
+                cat.back() = std::move(n);
                 break;
             }
             case Lexer::Token::QUESTION:
-                if (nodes.empty() || nodes.back().first != EXPR) {
-                    cont = false;
-                    break;
+                if (cat.empty()) {
+                    error = "'?' unexpected";
+                    return Graph::Ref();
                 }
                 lexer->Skip();
-                nodes.back().second = graph->NewDisjunct(symbols["empty"], nodes.back().second);
+                cat.back() = graph->NewDisjunct(symbols["empty"], cat.back());
                 break;
             case Lexer::Token::ERROR:
                 error = "invalid token";
@@ -523,22 +520,6 @@ public:
                 cont = false;
             }
         }
-
-        std::vector<Graph::Ref> disj;
-        std::vector<Graph::Ref> cat;
-
-        for (auto& node : nodes) {
-            switch (node.first) {
-            case EXPR:
-                cat.emplace_back(std::move(node.second));
-                break;
-            case PIPE:
-                disj.push_back(graph->NewConcat(std::move(cat)));
-                cat.clear();
-                break;
-            }
-        }
-
         disj.push_back(graph->NewConcat(std::move(cat)));
         return graph->NewDisjunct(std::move(disj));
     }
