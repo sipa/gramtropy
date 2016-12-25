@@ -43,6 +43,24 @@ private:
     int line = 0;
     const char* line_begin;
 
+    char Peek() const {
+        return *it;
+    }
+
+    bool End() const {
+        return it == itend;
+    }
+
+    void Advance() {
+        if (*it == '\n') {
+            ++it;
+            line_begin = it;
+            ++line;
+        } else {
+            ++it;
+        }
+    }
+
 public:
     int GetLine() const { return line; }
     int GetCol() const { return std::distance(line_begin, it); }
@@ -50,144 +68,141 @@ public:
     Lexer(const char* ptr, size_t len) : it(ptr), itend(ptr + len), line_begin(it) {}
 
     Token Lex() {
-        while (it != itend && (*it == ' ' || *it == '\n' || *it == '\r' || *it == '\t' || *it == '#')) {
-            if (*it == '\n') {
-                line++;
-                line_begin = std::next(it);
+        while (!End()) {
+            char ch = Peek();
+            if (ch != ' ' && ch != '\n' && ch != '\r' && ch != '\t' && ch != '#') {
+                break;
             }
-            if (*it == '#') {
-                while (it != itend && *it != '\n') {
-                    ++it;
+            Advance();
+            if (ch == '#') {
+                while (!End() && Peek() != '\n') {
+                    Advance();
                 }
-            } else {
-                ++it;
             }
         }
-        if (it == itend) {
+        if (End()) {
             return Token(Token::END);
         }
-        if ((*it >= 'a' && *it <= 'z') || (*it >= 'A' && *it <= 'Z') || *it == '_') {
-            auto bit = it;
-            ++it;
-            do {
-                if (it == itend) {
+        char ch = Peek();
+        if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_') {
+            std::string str = {ch};
+            Advance();
+            while (!End()) {
+                char ch2 = Peek();
+                if ((ch2 < 'a' || ch2 > 'z') && (ch2 < 'A' || ch2 > 'Z') && ch2 != '_' && (ch2 < '0' || ch2 > '9')) {
                     break;
                 }
-                if ((*it >= 'a' && *it <= 'z') || (*it >= 'A' && *it <= 'Z') || *it == '_' || (*it >= '0' && *it <= '9')) {
-                    ++it;
-                    continue;
-                }
-                break;
-            } while(true);
-            return Token(Token::SYMBOL, std::string(bit, it));
-        }
-        if (*it >= '0' && *it <= '9') {
-            auto bit = it;
-            ++it;
-            while (it != itend && *it >= '0' && *it <= '9') {
-                ++it;
+                str += ch2;
+                Advance();
             }
-            return Token(Token::INTEGER, std::string(bit, it));
+            return Token(Token::SYMBOL, std::move(str));
         }
-        switch (*it) {
+        if (ch >= '0' && ch <= '9') {
+            std::string str = {ch};
+            Advance();
+            while (!End()) {
+                char ch2 = Peek();
+                if (ch2 < '0' || ch2 > '9') {
+                    break;
+                }
+                str += ch2;
+                Advance();
+            }
+            return Token(Token::INTEGER, std::move(str));
+        }
+        switch (ch) {
         case '(':
-            ++it;
+            Advance();
             return Token(Token::OPEN_BRACE);
         case ')':
-            ++it;
+            Advance();
             return Token(Token::CLOSE_BRACE);
         case '|':
-            ++it;
+            Advance();
             return Token(Token::PIPE);
         case '+':
-            ++it;
+            Advance();
             return Token(Token::PLUS);
         case '*':
-            ++it;
+            Advance();
             return Token(Token::ASTERISK);
         case '?':
-            ++it;
+            Advance();
             return Token(Token::QUESTION);
         case '=':
-            ++it;
+            Advance();
             return Token(Token::EQUALS);
         case ';':
-            ++it;
+            Advance();
             return Token(Token::SEMICOLON);
         case ',':
-            ++it;
+            Advance();
             return Token(Token::COMMA);
         case '/': {
             bool escaped = false;
-            ++it;
+            Advance();
             std::string str;
             while (true) {
                 bool wasescaped = escaped;
                 escaped = false;
-                if (it == itend) {
+                if (End()) {
                     return Token(Token::ERROR);
                 }
-                if (*it == '/' && !wasescaped) {
-                    ++it;
+                if (Peek() == '/' && !wasescaped) {
+                    Advance();
                     break;
                 }
-                str += *it;
-                if (*it == '\n') {
-                    ++line;
-                    line_begin = std::next(it);
-                } else if (*it == '\\' && !wasescaped) {
+                str += Peek();
+                if (Peek() == '\\' && !wasescaped) {
                     escaped = true;
                 }
-                ++it;
+                Advance();
             }
             return Token(Token::REGEXP, std::move(str));
         }
         case '"': {
-            ++it;
+            Advance();
             std::string str;
-            do {
-                if (it == itend) {
+            bool cont = true;
+            while (cont) {
+                if (End()) {
                     return Token(Token::ERROR);
                 }
-                if (*it == '"') {
-                    ++it;
+                char ch2 = Peek();
+                Advance();
+                switch (ch2) {
+                case '"':
+                    cont = false;
                     break;
-                }
-                if (*it == '\\') {
-                    ++it;
-                    if (it == itend) {
+                case '\\': {
+                    if (End()) {
                         return Token(Token::ERROR);
                     }
-                    if (*it == '"') {
-                        ++it;
-                        str += '"';
-                        continue;
-                    }
-                    if (*it == '\\') {
-                        ++it;
-                        str += '\\';
-                        continue;
-                    }
-                    if (*it == 'n') {
-                        ++it;
+                    char ch3 = Peek();
+                    switch (ch3) {
+                    case '"':
+                    case '\\':
+                        Advance();
+                        str += ch3;
+                        break;
+                    case 'n':
+                        Advance();
                         str += '\n';
-                        continue;
+                        break;
+                    default:
+                        return Token(Token::ERROR);
                     }
-                    return Token(Token::ERROR);
+                    continue;
                 }
-                if (*it == '\n') {
-                    ++line;
-                    line_begin = std::next(it);
+                default:
+                    str += ch2;
                 }
-                str += *it;
-                ++it;
-            } while(true);
+            }
             return Token(Token::STRING, std::move(str));
         }
         default:
-            break;
+            return Token(Token::ERROR);
         }
-        return Token(Token::ERROR);
     }
 
     const Token::TokenType PeekType() {
