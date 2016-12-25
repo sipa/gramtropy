@@ -46,7 +46,7 @@ ExpGraph::Ref Expander::MakeDisjunct(std::vector<ExpGraph::Ref>&& refs) {
         return ExpGraph::Ref();
     }
     auto ret = MakeNonDict(std::move(refs), ExpGraph::Node::NodeType::DISJUNCT, true);
-    if (ret->count.bits() <= 6) {
+    if (ret->count.bits() <= 4) {
         auto inl = Inline(ret);
         return MakeDict(std::move(inl));
     }
