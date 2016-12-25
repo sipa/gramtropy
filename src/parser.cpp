@@ -490,7 +490,7 @@ public:
                 }
                 lexer->Skip();
                 Graph::Ref n = graph->NewUndefined();
-                graph->Define(n, graph->NewDisjunct(symbols["empty"], graph->NewConcat(cat.back(), n)));
+                graph->Define(n, graph->NewDisjunct(symbols["empty"], graph->NewConcat(std::move(cat.back()), n)));
                 cat.back() = std::move(n);
                 break;
             }
