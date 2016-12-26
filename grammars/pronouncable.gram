@@ -1,0 +1,11 @@
+bc = dict(b bl br c ch chl chr cl cr d dr dw f fl fr g gh gl gn gr h j k kn l m n p ph pl pr ps qu r rh s sc sch scr sh shr sk sl sm sn sp spl spr squ st str sw t th thr tr tw v w wh wr z);
+ec = dict(b bs c ch ck cks cs ct cts d ds f ff ffs fs ft fts g gh ghs ght ghts gn gns gs h hs k ks l ld lds lf lk lks ll lls lm lms ls lt lts m mb mbs mp mps ms n nch nd nds ng ngs nk nks ns nt nth nths nts p ph phs ps pt pts r rb rbs rch rd rds rk rks rl rls rm rms rn rns rs rt rth rts s sh sk sks sm sms ss st sts t tch th ths ts w wl wls wn wns ws x);
+mc = dict(b bb bbl bc bd bj bl bm bn br bs bsc bst bstr bt btr bv c cc ccl ch chm chn ck ckb ckh ckl ckn ckp ckr cks ckst ckw cl cqu cr ct ctl ctr d db dc dd ddl df dg dh dj dl dm dn dp dr ds dst dv dw f ff ffl ffr fl fr ft g gg ggl ggr gh ghb ght ghtf ghtl gl gm gn gr h j k kl l lb lc lch ld lf lg lk ll llb llf lm ln lp lph lr ls lst lt lth ltr lv lw m mb mbl mbr mf ml mm mn mp mph mpl mpr mpt mr ms mst n nb nc nch ncl ncr nct nd ndb ndf ndl ndm ndp ndr nds ndst ndw nf nfl nfr ng ngh ngl ngr nh nj nk nkl nl nm nn np npl npr nqu nr ns nsc nscr nsf nsh nsl nsm nsp nst nstr nt nth nthr ntl ntm ntr nv nw nz p pb ph phr pl pm pn pp ppl ppr pr ps pst pt pw qu r rb rbl rbr rc rch rcl rd rdl rdr rf rg rgl rgr rh rj rk rl rm rn rnm rp rph rpl rpr rqu rr rs rsh rsp rst rt rth rthr rtl rtm rtn rtr rts rv rw s sb sc sch scl scr sd sf sg sh shb shl shm shn shr sk sl sm sn sp sph spl spr squ sr ss ssl ssm ssn ssp ssw st stb stf sth stl stm str stw sw t tb tc tch td tf th thf thl thr tl tm tn tp tr ts tsh tt ttl ttr tw tz v vv w wb wd wf wh wk wl wm wn wp wr ws x xc xcl xh xp xpl xpr xt xtr z zz zzl);
+
+bv = dict(a ae ai au e ea ei eu eye i io o oa oi ou u ya ye yea yo you yu);
+mv = dict(a ae ai au ay aya aye ayi ayo e ea eau ee eei ei eo eou eu ey eye eyi i ia ie io iou iu o oa oe oi oo ou oy oya oye oyi u ua ue ui uo uou y ya ye yi yo);
+ev = dict(a ae ay e ea ee ey i ia ie io o oe oo oy u ue y);
+
+word = max_length(9, (bc mv | bv) (mc mv)* (ec | mc ev) | bc ev);
+
+main = word (" " word)*;
