@@ -1,25 +1,16 @@
-onset = "b" ("" | "l" | "r") |
-        "c" ("h" | "hr" | "hl") |
-        "f" ("" | "l" | "n" | "r") |
-        "g" ("" | "l" | "n" | "r") |
-        "h" |
-        "j" |
-        "k" ("" | "l" | "n" | "r" | "w") |
-        "l" |
-        "m" |
-        "n" |
-        "p" ("" | "l" | "n" | "r" | "s") |
-        "r" |
-        "s" ("" | "ch" ("" | "l" | "m" | "r") | "j" | "k" | "m" | "n" | "p" ("" | "l" | "r") | "t" | "tr" | "w") |
-        "t" ("" | "j" | "r" | "s" | "sj" | "w") |
-        "v" ("" | "l" | "r") |
-        "w" ("" | "r") |
-        "z" ("" | "z");
+onset = /(b|ch|v)[lr]?/ |
+        /[gf][lnr]?/ |
+        /[hjlmnr]/ |
+        /k[lnrw]?/ |
+        /p[lnrs]?/ |
+        /s(ch[lmr]?|[jkmnw]|p[lr]?|tr?)?/ |
+        /t([jrw]|sj?)?/ |
+        /wr?/ |
+        /zz?/;
 
-nucleus = "a" | "aa" | "au" | "e" | "ee" | "ei" | "eu" | "i" | "ie" | "ij" | "o" | "oo" | "oe" | "ou" | "u" | "ui" | "uu";
+nucleus = /a[au]?/ | /e[eiu]?/ | /i[ej]?/ | /o[oeu]?/ | /u[iu]?/;
 
-coda = "b" | "bs" | "bt" | "ch" | "cht" | "d" | "ds" | "f" | "fd" | "fs" | "fst" | "ft" |
-       "g" | "gd" | "gs" | "gst" | "gt" | "k" | "ks" | "kt" | "l" | "ld" | "lds" | "lf" | "lft" | "lg" | "lk" | "lkt";
+coda = /[bk][st]?/ | /cht?/ | /ds?/ | /[fg]([dt]|st?)?/ | /l(g|[fk]t?|ds?)?/;
 
 codaonset = dedup(coda onset | coda | onset);
 
