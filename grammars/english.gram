@@ -7,18 +7,18 @@ quantity_c_s = quantity_vc_s | "a";
 quantity_v_p = quantity_vc_p;
 quantity_c_p = quantity_vc_p;
 
-c_value = dict(delicious charming nice terrible horrible despicable beautiful
+c_value = dict(charming nice terrible horrible despicable beautiful
                distasteful disgusting disasterous ridiculous good bad supreme
                cute substandard poor deficient defective faulty miserable
                crappy disagreeable worthless fine sound fit robust sturdy strong
-               weak superior satisfactory firm delightful notable famed
+               weak superior satisfactory firm delightful notable famed great
                known renowned marvelous superb neat worthy pleasing);
 v_value = dict(awesome awful excellent exquisite ugly evil inferior unpleasant
                imperfect unacceptable unsuitable unsatisfactory inadequate unwelcome
                appropriate inappropriate enjoyable eminent exceptional);
 value = c_value | v_value;
 
-c_size = dict(big small large tiny tall great short huge massive gargantuous humongous
+c_size = dict(big small large tiny tall short huge massive gargantuous humongous
               microscopic spacious gigantic grand collosal monumental copious);
 v_size = dict(enormous immense extensive immeasurable);
 size = c_size | v_size;
@@ -28,7 +28,7 @@ v_temperature = none;
 temperature = c_temperature | v_temperature;
 
 c_age = dict(new) | /[1-79]|1[0-79]|[2-79]\d/ "-year-old";
-v_age = dict(old ancient) | /8|18|8\d/ "-year-old";
+v_age = dict(young old ancient) | /8|18|8\d/ "-year-old";
 age = c_age | v_age;
 
 c_shape = dict(round square rectangular spherical curled cylindrical triangular pyramidal sharp twisted);
@@ -51,37 +51,68 @@ v_origin = dict(Italian Icelandic Indonesian English American Ukrainian
                 Austrian Israelian);
 origin = c_origin | v_origin;
 
-c_material = dict(wooden glass silver bronze golden plastic leather metal ceramic stone diamond tin);
+c_material = dict(wooden glass silver bronze golden plastic leather metal ceramic stone diamond tin chrome);
 v_material = none;
 material = c_material | v_material;
 
-c_noun_s = dict(vase table chain shoe machine ball television carpet wire house lamp building pillar book wall);
-v_noun_s = dict(oven);
-c_noun_p = c_noun_s "s";
-v_noun_p = v_noun_s "s";
-noun_s = c_noun_s | v_noun_s;
-noun_p = c_noun_p | v_noun_p;
+c_noun_thing_s = dict(vase table chain shoe machine ball television carpet wire house lamp building pillar book wall seat painting statue palace grave clock);
+v_noun_thing_s = dict(oven);
+c_noun_thing_p = c_noun_thing_s "s";
+v_noun_thing_p = v_noun_thing_s "s";
+noun_thing_s = c_noun_thing_s | v_noun_thing_s;
+noun_thing_p = c_noun_thing_p | v_noun_thing_p;
 
-adj_x1 = (material _)?;
-adj_x2 = (origin _)? adj_x1;
-adj_x3 = (color _)? adj_x2;
-adj_x4 = (shape _)? adj_x3;
-adj_x5 = (age _)? adj_x4;
-adj_x6 = (temperature _)? adj_x5;
-adj_x7 = (size _)? adj_x6;
+c_noun_actor_s = dict(boy girl worker engineer doctor lawyer driver miner developer waiter coder);
+v_noun_actor_s = dict();
+c_noun_actor_p = c_noun_actor_s "s";
+v_noun_actor_p = v_noun_actor_s "s";
+noun_actor_s = c_noun_actor_s | v_noun_actor_s;
+noun_actor_p = c_noun_actor_p | v_noun_actor_p;
 
-c_adj = c_value _ adj_x7 | c_size _ adj_x6 | c_temperature _ adj_x5 |
-        c_age _ adj_x4 | c_shape _ adj_x3 | c_color _ adj_x2 | c_origin _ adj_x1 | c_material _;
-v_adj = v_value _ adj_x7 | v_size _ adj_x6 | v_temperature _ adj_x5 |
-        v_age _ adj_x4 | v_shape _ adj_x3 | v_color _ adj_x2 | v_origin _ adj_x1 | v_material _;
+adj_thing_x1 = (material _)?;
+adj_thing_x2 = (origin _)? adj_thing_x1;
+adj_thing_x3 = (color _)? adj_thing_x2;
+adj_thing_x4 = (shape _)? adj_thing_x3;
+adj_thing_x5 = (age _)? adj_thing_x4;
+adj_thing_x6 = (temperature _)? adj_thing_x5;
+adj_thing_x7 = (size _)? adj_thing_x6;
 
-noun = (quantity_c_s _ c_adj | quantity_v_s _ v_adj) noun_s |
-       (quantity_c_p _ c_adj | quantity_v_p _ v_adj) noun_p |
-       quantity_c_s _ c_noun_s |
-       quantity_v_s _ v_noun_s |
-       quantity_c_p _ c_noun_p |
-       quantity_v_p _ v_noun_p |
-       c_noun_p |
-       v_noun_p;
+adj_actor_x1 = (origin _)?;
+adj_actor_x2 = (age _)? adj_actor_x1;
+adj_actor_x3 = (size _)? adj_actor_x2;
 
-main = noun;
+c_adj_thing = c_value _ adj_thing_x7 | c_size _ adj_thing_x6 | c_temperature _ adj_thing_x5 |
+        c_age _ adj_thing_x4 | c_shape _ adj_thing_x3 | c_color _ adj_thing_x2 | c_origin _ adj_thing_x1 | c_material _;
+v_adj_thing = v_value _ adj_thing_x7 | v_size _ adj_thing_x6 | v_temperature _ adj_thing_x5 |
+        v_age _ adj_thing_x4 | v_shape _ adj_thing_x3 | v_color _ adj_thing_x2 | v_origin _ adj_thing_x1 | v_material _;
+
+c_adj_actor = c_value _ adj_actor_x3 | c_size _ adj_actor_x2 | c_age _ adj_actor_x1 | c_origin _;
+v_adj_actor = v_value _ adj_actor_x3 | v_size _ adj_actor_x2 | v_age _ adj_actor_x1 | v_origin _;
+
+nounadj_thing_s =
+       (quantity_c_s _ c_adj_thing | quantity_v_s _ v_adj_thing) noun_thing_s |
+       quantity_c_s _ c_noun_thing_s |
+       quantity_v_s _ v_noun_thing_s;
+
+nounadj_actor_s =
+       (quantity_c_s _ c_adj_actor | quantity_v_s _ v_adj_actor) noun_actor_s |
+       quantity_c_s _ c_noun_actor_s |
+       quantity_v_s _ v_noun_actor_s;
+
+nounadj_thing_p =
+       (quantity_c_p _ c_adj_thing | quantity_v_p _ v_adj_thing) noun_thing_p |
+       quantity_c_p _ c_noun_thing_p |
+       quantity_v_p _ v_noun_thing_p |
+       c_noun_thing_p |
+       v_noun_thing_p;
+
+nounadj_actor_p =
+       (quantity_c_p _ c_adj_actor | quantity_v_p _ v_adj_actor) noun_actor_p |
+       quantity_c_p _ c_noun_actor_p |
+       quantity_v_p _ v_noun_actor_p |
+       c_noun_actor_p |
+       v_noun_actor_p;
+
+main = nounadj_actor_s " makes " (nounadj_thing_s | nounadj_thing_p) |
+       nounadj_actor_p " make " (nounadj_thing_s | nounadj_thing_p);
+
