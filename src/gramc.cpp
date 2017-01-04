@@ -46,6 +46,31 @@ ExpGraph::Ref ExpandForBits(const Graph& graph, const Graph::Ref& main, ExpGraph
     return ExpGraph::Ref();
 }
 
+ExpGraph::Ref ExpandForMax(const Graph& graph, const Graph::Ref& main, ExpGraph& expgraph, double maxbits, size_t minlen, size_t maxlen, size_t maxnodes, size_t maxthunks) {
+    Expander exp(&graph, &expgraph, maxnodes, maxthunks);
+
+    std::vector<ExpGraph::Ref> refs;
+    BigNum total;
+    for (size_t len = minlen; len <= maxlen; len++) {
+        auto r = exp.Expand(main, len);
+        if (r.second.size() > 0) {
+            break;
+        }
+        if (!r.first) {
+            continue;
+        }
+        BigNum ntotal = total;
+        ntotal += r.first->count;
+        if (ntotal.log2() > maxbits) {
+            break;
+        }
+        total = std::move(ntotal);
+        refs.emplace_back(std::move(r.first));
+    }
+
+    return expgraph.NewDisjunct(std::move(refs));
+}
+
 bool WriteFile(const char *file, ExpGraph& expgraph, const ExpGraph::Ref& emain) {
     FILE* fp = fopen(file, "w");
     if (!fp) {
@@ -97,6 +122,7 @@ int main(int argc, char** argv) {
     size_t maxnodes = 1000000;
     size_t maxthunks = 250000;
     double overshoot = 0.2;
+    char mode = 0;
     double bits = 64;
     const char* infile = nullptr;
     const char* outfile = nullptr;
@@ -104,9 +130,15 @@ int main(int argc, char** argv) {
     bool help = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, "b:l:u:N:T:O:h")) != -1) {
+    while ((opt = getopt(argc, argv, "b:B:l:u:N:T:O:h")) != -1) {
         switch (opt) {
         case 'b':
+        case 'B':
+            if (mode != 0 && mode != opt) {
+                fprintf(stderr, "Cannot specify both -b and -B\n");
+                invalid_usage = true;
+            }
+            mode = opt;
             bits = strtod(optarg, nullptr);
             break;
         case 'l':
@@ -182,7 +214,8 @@ int main(int argc, char** argv) {
     if (invalid_usage || help) {
         fprintf(stderr, "Usage: %s [options...] infile outfile\n", *argv);
         fprintf(stderr, "Options:\n");
-        fprintf(stderr, "  -b bits: use a range with at least bits bits of entropy (default: 64.0)\n");
+        fprintf(stderr, "  -b bits: find a narrow range with at least bits bits of entropy (default: 64.0)\n");
+        fprintf(stderr, "  -B bits: find a large range with at most bits bits of entropy (default: unset)\n");
         fprintf(stderr, "  -l minlen: generate phrases of at least minlen characters (default: 0)\n");
         fprintf(stderr, "  -u maxlen: generate phrases of at most maxlen characters (default: 1024)\n");
         fprintf(stderr, "  -N maxnodes, -T maxthunks, -O overshoot: miscelleanous tweaks\n");
@@ -200,7 +233,12 @@ int main(int argc, char** argv) {
     }
 
     ExpGraph expgraph;
-    ExpGraph::Ref emain = ExpandForBits(graph, main, expgraph, bits, overshoot, minlen, maxlen, maxnodes, maxthunks);
+    ExpGraph::Ref emain;
+    if (mode == 0 || mode == 'b') {
+        emain = ExpandForBits(graph, main, expgraph, bits, overshoot, minlen, maxlen, maxnodes, maxthunks);
+    } else {
+        emain = ExpandForMax(graph, main, expgraph, bits, minlen, maxlen, maxnodes, maxthunks);
+    }
     if (!emain.defined()) {
         return 2;
     }
