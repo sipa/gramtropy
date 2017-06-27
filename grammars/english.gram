@@ -1,7 +1,7 @@
 _ = " ";
 
 quantity_vc_s = dict(one the);
-quantity_vc_p = "the "? dict(two three four five many) | dict(some most no "a few" several multiple);
+quantity_vc_p = "the "? dict(two three four five many most several multiple) | dict(some no "a few");
 quantity_v_s = quantity_vc_s | "an";
 quantity_c_s = quantity_vc_s | "a";
 quantity_v_p = quantity_vc_p;
@@ -42,11 +42,11 @@ color = c_color | v_color;
 
 c_origin = dict(Chinese Victorian Japanese German Dutch French Spanish
                 Portugese Greek Swiss Canadian Scandinavian Danish Mexican
-                Russian Mongolian Welsh Scottish Irish British Roman Czech
+                Russian Mongolian Welsh Scottish British Roman Czech
                 Turkish Polish Swedish Norwegian Finnish Macedonian Maltese
                 Brazilian Nigerian Thai Colombian Peruvian Nepalese Taiwanese
                 Syrian Belgian Cuban Haitian Bolivian Hungarian);
-v_origin = dict(Italian Icelandic Indonesian English American Ukrainian
+v_origin = dict(Italian Icelandic Indonesian Irish English American Ukrainian
                 Albanian Ethiopian Egyptian Argentinian Algerian Australian
                 Austrian Israelian);
 origin = c_origin | v_origin;
@@ -55,15 +55,18 @@ c_material = dict(wooden glass silver bronze golden plastic leather metal cerami
 v_material = none;
 material = c_material | v_material;
 
-c_noun_thing_s = dict(vase table chain shoe machine ball television carpet wire house lamp building pillar book wall seat painting statue palace grave clock);
+c_noun_thing_s = dict(vase table chain shoe machine ball television carpet wire house lamp building pillar
+                      book wall seat painting statue palace grave clock jacket door floor castle car train
+                      bus bike);
 v_noun_thing_s = dict(oven);
 c_noun_thing_p = c_noun_thing_s "s";
 v_noun_thing_p = v_noun_thing_s "s";
 noun_thing_s = c_noun_thing_s | v_noun_thing_s;
 noun_thing_p = c_noun_thing_p | v_noun_thing_p;
 
-c_noun_actor_s = dict(boy girl worker engineer doctor lawyer driver miner developer waiter coder);
-v_noun_actor_s = dict();
+c_noun_actor_s = dict(boy girl human king queen worker doctor lawyer miner developer waiter coder
+                      driver dentist butcher baker cook);
+v_noun_actor_s = dict(engineer);
 c_noun_actor_p = c_noun_actor_s "s";
 v_noun_actor_p = v_noun_actor_s "s";
 noun_actor_s = c_noun_actor_s | v_noun_actor_s;
@@ -113,6 +116,8 @@ nounadj_actor_p =
        c_noun_actor_p |
        v_noun_actor_p;
 
-main = nounadj_actor_s " makes " (nounadj_thing_s | nounadj_thing_p) |
-       nounadj_actor_p " make " (nounadj_thing_s | nounadj_thing_p);
+verbs = dict(produce make destroy finish clean polish paint decorate open close analyze);
+
+main = nounadj_actor_s _ verbs "s" _ (nounadj_thing_s | nounadj_thing_p) |
+       nounadj_actor_p _ verbs _ (nounadj_thing_s | nounadj_thing_p);
 
