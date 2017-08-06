@@ -195,7 +195,7 @@ class rclist {
         deleting = false;
     }
 
-    friend class base_node;
+    friend struct base_node;
 
 public:
     typedef T value_type;

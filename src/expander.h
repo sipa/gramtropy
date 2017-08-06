@@ -33,7 +33,6 @@ template <typename T>
 ComparablePointer<T> MakeComparable(const T* x) { return ComparablePointer<T>(x); }
 
 class Expander {
-    const Graph* graph;
     ExpGraph* expgraph;
 
     size_t max_nodes;
@@ -106,7 +105,7 @@ class Expander {
     bool ProcessThunk(ThunkRef ref, std::string& error);
 
 public:
-    Expander(const Graph* graph_, ExpGraph* expgraph_, size_t max_nodes_, size_t max_thunks_) : graph(graph_), expgraph(expgraph_), max_nodes(max_nodes_), max_thunks(max_thunks_) {}
+    Expander(ExpGraph* expgraph_, size_t max_nodes_, size_t max_thunks_) :expgraph(expgraph_), max_nodes(max_nodes_), max_thunks(max_thunks_) {}
 
     ~Expander();
 

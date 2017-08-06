@@ -8,8 +8,8 @@
 
 namespace {
 
-ExpGraph::Ref ExpandForBits(const Graph& graph, const Graph::Ref& main, ExpGraph& expgraph, double minbits, double overshoot, size_t minlen, size_t maxlen, size_t maxnodes, size_t maxthunks) {
-    Expander exp(&graph, &expgraph, maxnodes, maxthunks);
+ExpGraph::Ref ExpandForBits(const Graph::Ref& main, ExpGraph& expgraph, double minbits, double overshoot, size_t minlen, size_t maxlen, size_t maxnodes, size_t maxthunks) {
+    Expander exp(&expgraph, maxnodes, maxthunks);
     double goalbits = minbits + log1p(overshoot) / log(2.0);
 
     std::vector<ExpGraph::Ref> refs;
@@ -46,8 +46,8 @@ ExpGraph::Ref ExpandForBits(const Graph& graph, const Graph::Ref& main, ExpGraph
     return ExpGraph::Ref();
 }
 
-ExpGraph::Ref ExpandForMax(const Graph& graph, const Graph::Ref& main, ExpGraph& expgraph, double maxbits, size_t minlen, size_t maxlen, size_t maxnodes, size_t maxthunks) {
-    Expander exp(&graph, &expgraph, maxnodes, maxthunks);
+ExpGraph::Ref ExpandForMax(const Graph::Ref& main, ExpGraph& expgraph, double maxbits, size_t minlen, size_t maxlen, size_t maxnodes, size_t maxthunks) {
+    Expander exp(&expgraph, maxnodes, maxthunks);
 
     std::vector<ExpGraph::Ref> refs;
     BigNum total;
@@ -235,9 +235,9 @@ int main(int argc, char** argv) {
     ExpGraph expgraph;
     ExpGraph::Ref emain;
     if (mode == 0 || mode == 'b') {
-        emain = ExpandForBits(graph, main, expgraph, bits, overshoot, minlen, maxlen, maxnodes, maxthunks);
+        emain = ExpandForBits(main, expgraph, bits, overshoot, minlen, maxlen, maxnodes, maxthunks);
     } else {
-        emain = ExpandForMax(graph, main, expgraph, bits, minlen, maxlen, maxnodes, maxthunks);
+        emain = ExpandForMax(main, expgraph, bits, minlen, maxlen, maxnodes, maxthunks);
     }
     if (!emain.defined()) {
         return 2;

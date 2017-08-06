@@ -82,7 +82,7 @@ std::vector<std::string> InlineDict(const ExpGraph::Ref& ref, size_t offset = 0)
         }
         break;
     }
-    return std::move(res);
+    return res;
 }
 
 bool Collectable(ExpGraph::Node::NodeType nodetype, const std::vector<ExpGraph::Ref>& input) {
