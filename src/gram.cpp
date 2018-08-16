@@ -52,6 +52,7 @@ enum RunMode {
     MODE_ENCODE_STREAM,
     MODE_DECODE_STREAM,
     MODE_INFO,
+    MODE_ITERATE,
     MODE_HELP,
 };
 
@@ -62,10 +63,13 @@ int main(int argc, char** argv) {
     int generate = 1;
     int opt;
     const char* str = nullptr;
-    while ((opt = getopt(argc, argv, "iDEd:e:g:h")) != -1) {
+    while ((opt = getopt(argc, argv, "iaDEd:e:g:h")) != -1) {
         switch (opt) {
         case 'i':
             mode = MODE_INFO;
+            break;
+        case 'a':
+            mode = MODE_ITERATE;
             break;
         case 'D':
             mode = MODE_DECODE_STREAM;
@@ -98,6 +102,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "       %s -E file          Encode hexadecimals read from stdin\n", *argv);
         fprintf(stderr, "       %s -D file          Decode phrases read from stdin\n", *argv);
         fprintf(stderr, "       %s -i file          Show information about file\n", *argv);
+        fprintf(stderr, "       %s -a file          Generate all phrases from file, in order\n", *argv);
         return mode != MODE_HELP;
     }
 
@@ -115,6 +120,14 @@ int main(int argc, char** argv) {
             }
         }
         break;
+    case MODE_ITERATE:
+    {
+        BigNum num;
+        do {
+            printf("%s\n", Generate(graph, main, BigNum(num)).c_str());
+            num += 1;
+        } while(true);
+    }
     case MODE_ENCODE:
     {
         BigNum num;
