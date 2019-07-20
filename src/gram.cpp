@@ -47,6 +47,7 @@ bool ParseFile(const char *file, FlatGraph& graph) {
 
 enum RunMode {
     MODE_GENERATE,
+    MODE_RANGE,
     MODE_ENCODE,
     MODE_DECODE,
     MODE_ENCODE_STREAM,
@@ -63,13 +64,17 @@ int main(int argc, char** argv) {
     int generate = 1;
     int opt;
     const char* str = nullptr;
-    while ((opt = getopt(argc, argv, "iaDEd:e:g:h")) != -1) {
+    while ((opt = getopt(argc, argv, "iaDEr:d:e:g:h")) != -1) {
         switch (opt) {
         case 'i':
             mode = MODE_INFO;
             break;
         case 'a':
             mode = MODE_ITERATE;
+            break;
+        case 'r':
+            mode = MODE_RANGE;
+            str = optarg;
             break;
         case 'D':
             mode = MODE_DECODE_STREAM;
@@ -103,6 +108,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "       %s -D file          Decode phrases read from stdin\n", *argv);
         fprintf(stderr, "       %s -i file          Show information about file\n", *argv);
         fprintf(stderr, "       %s -a file          Generate all phrases from file, in order\n", *argv);
+        fprintf(stderr, "       %s -r num:num file  Encode range of hexadecimals into phrase\n", *argv);
         return mode != MODE_HELP;
     }
 
@@ -127,6 +133,32 @@ int main(int argc, char** argv) {
             printf("%s\n", Generate(graph, main, BigNum(num)).c_str());
             num += 1;
         } while(true);
+    }
+    case MODE_RANGE:
+    {
+        BigNum num1;
+        BigNum num2;
+        std::string s(str);
+        auto pos = s.find(':');
+        if (pos == std::string::npos) {
+            num2.set_hex(s.c_str());
+        } else {
+            num1.set_hex(s.substr(0, pos).c_str());
+            num2.set_hex(s.substr(pos + 1, s.size()).c_str());
+        }
+        if (num1 > num2) {
+            fprintf(stderr, "Start is after end\n");
+            return 5;
+        }
+        if (num2 >= main->count) {
+            fprintf(stderr, "Number out of range (max %s)\n", main->count.hex().c_str());
+            return 5;
+        }
+        while (num1 < num2) {
+            printf("%s\n", Generate(graph, main, BigNum(num1)).c_str());
+            num1 += 1;
+        }
+        break;
     }
     case MODE_ENCODE:
     {
@@ -176,7 +208,7 @@ int main(int argc, char** argv) {
                 fprintf(stderr, "Number %s out of range (max %s)\n", num.hex().c_str(), main->count.hex().c_str());
                 return 5;
             }
-            printf("%s\n", Generate(graph, main, std::move(num)).c_str());
+            printf("%s\n", Generate(graph, main, BigNum(num)).c_str());
         }
         break;
     }
