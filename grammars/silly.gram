@@ -4,7 +4,7 @@ cqualify = "slightly" | "somewhat" | "very" | "excessively" | "massively" | "har
 vqualify = "almost";
 
 vadjective = "angry" | "ill" | "evil" | "insane" | "ugly" | "empty" | "odd" | "apt" | "icy" | "abstract" | "absurd" |
-             "accoustic" | "actual" | "aerobic" | "afraid" | "amazing" | "amused" | "ancient" | "annual" |
+             "acoustic" | "actual" | "aerobic" | "afraid" | "amazing" | "amused" | "ancient" | "annual" |
              "another" | "antique" | "arctic" | "armed" | "awake" | "aware" | "awesome" | "awful" | "awkward";
 
 cadjective = "big" | "small" | "sleepy" | "tall" | "hungry" | "funny" | "great" | "puny" |
@@ -61,7 +61,7 @@ s_verb = "kicks" | "casts" | "imagines" | "designs" | "programs" | "enchants" |
 p_verb = "kick" | "cast" | "imagine" | "design" | "program" | "enchant" | "establish" |
          "prove" | "deliver" | "hunt" | "hold" | "hurt" | "have" | "go to" | "dream about" |
          "walk to" | "write" | "hear" | "leave" | "want" | "abandon" | "absorb" | "abuse" |
-         "access" | "accuse" | "acquire" | "adapt" | "add" | "adress" | "adjust" | "advance" |
+         "access" | "accuse" | "acquire" | "adapt" | "add" | "address" | "adjust" | "advance" |
          "agree with" | "alert" | "allow" | "alter" | "approve" | "argue about" | "arrange" |
          "arrest" | "ask about" | "assault" | "attack" | "attend" | "attract" | "audits" |
          "avoid" | "balance" | "battle" | "begin" | "believe that" | "benefit from" |
@@ -120,7 +120,7 @@ p_thing = "insects" | "issuers" | "houses" | "cars" | "shoes" | "tanks" | "robot
           "blankets" | "blouses" | "bodies" | "bombs" | "books" | "borders" |
           "boxes" | "brackets" | "brains" | "brands" | "breads" | "breezes" | "bricks" | "bridges" |
           "broccolis" | "brooms" | "brushes" | "bubbles" | "budgets" | "buffalo" | "bulbs" |
-          "bullets" | "bundles" | "bunkers" | "burgers" | "busses" | "businesses" | "cabins" |
+          "bullets" | "bundles" | "bunkers" | "burgers" | "buses" | "businesses" | "cabins" |
           "cables" | "cactusses" | "cages" | "cakes" | "cameras" | "camp";
 
 connect = "and" | "but" | "thus" | "hence" | "yet" | "considering" | "while" | "so" | "and also" | "because" | "before";
