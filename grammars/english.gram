@@ -8,7 +8,7 @@ quantity_v_p = quantity_vc_p;
 quantity_c_p = quantity_vc_p;
 
 c_value = dict(charming nice terrible horrible despicable beautiful
-               distasteful disgusting disasterous ridiculous good bad supreme
+               distasteful disgusting disastrous ridiculous good bad supreme
                cute substandard poor deficient defective faulty miserable
                crappy disagreeable worthless fine sound fit robust sturdy strong
                weak superior satisfactory firm delightful notable famed great
@@ -19,7 +19,7 @@ v_value = dict(awesome awful excellent exquisite ugly evil inferior unpleasant
 value = c_value | v_value;
 
 c_size = dict(big small large tiny tall short huge massive gargantuous humongous
-              microscopic spacious gigantic grand collosal monumental copious);
+              microscopic spacious gigantic grand colossal monumental copious);
 v_size = dict(enormous immense extensive immeasurable);
 size = c_size | v_size;
 
@@ -41,7 +41,7 @@ v_color = dict(indigo orange aquamarine);
 color = c_color | v_color;
 
 c_origin = dict(Chinese Victorian Japanese German Dutch French Spanish
-                Portugese Greek Swiss Canadian Scandinavian Danish Mexican
+                Portuguese Greek Swiss Canadian Scandinavian Danish Mexican
                 Russian Mongolian Welsh Scottish British Roman Czech
                 Turkish Polish Swedish Norwegian Finnish Macedonian Maltese
                 Brazilian Nigerian Thai Colombian Peruvian Nepalese Taiwanese
