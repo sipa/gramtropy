@@ -1,0 +1,8 @@
+# A Proposal for Proquints: Identifiers that are Readable, Spellable, and Pronounceable
+# https://arxiv.org/html/0901.4016
+
+_ = " ";
+con = "b"|"d"|"f"|"g"|"h"|"j"|"k"|"l"|"m"|"n"|"p"|"r"|"s"|"t"|"v"|"z";
+vo = "a"|"i"|"o"|"u";
+word = con vo con vo con;
+main = word (_ word)*;
